@@ -1604,27 +1604,7 @@ def _render_signals_tab(intelligence: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # ── Debug expander — always visible, helps diagnose why LLM returned [] ──
-    with st.expander("🔬 Debug: raw AI signals payload", expanded=False):
-        st.markdown(
-            f"<div style='font-size:10px;font-family:monospace;color:#b45309;"
-            f"margin-bottom:8px;padding:6px 10px;background:#fffbeb;"
-            f"border:1px solid #fde68a;border-radius:6px;'>"
-            f"LLM returned <b>{len(raw_llm_signals)}</b> signal(s) · "
-            f"doc_type=<b>{doc_type!r}</b> · "
-            f"{'⚠ synthesized fallback active' if synthesized else '✓ using LLM signals'}"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-        st.json(raw_llm_signals if raw_llm_signals else {"note": "LLM returned empty signals list — showing synthesized keyword fallback"})
-        full_text = intelligence.get("full_text", "")
-        if full_text:
-            st.markdown(
-                f"<div style='font-size:9px;color:{_LBL};font-family:monospace;"
-                f"margin-top:8px;margin-bottom:4px;'>📄 First 600 chars of full_text (keyword search corpus):</div>",
-                unsafe_allow_html=True,
-            )
-            st.code(full_text[:600], language="text")
+   
 
     if not signals:
         st.markdown(

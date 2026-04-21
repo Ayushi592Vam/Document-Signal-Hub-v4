@@ -1637,20 +1637,7 @@ def _render_signals_tab(intelligence: dict) -> None:
         )
         return
 
-    # ── Yellow banner when synthesized ───────────────────────────────────────
-    if synthesized:
-        st.markdown(
-            f"<div style='background:#fffbeb;border:1px solid #fde68a;"
-            f"border-left:4px solid #ca8a04;border-radius:8px;"
-            f"padding:10px 16px;margin-bottom:14px;"
-            f"font-size:11px;color:#92400e;font-family:monospace;'>"
-            f"⚠ <b>Synthesized signals</b> — the AI extraction returned 0 signals for this document. "
-            f"These signals were detected by scanning the document text for domain-specific keywords. "
-            f"Open the debug expander above to inspect the raw AI payload. "
-            f"Re-running AI Analysis may produce richer LLM-extracted signals."
-            f"</div>",
-            unsafe_allow_html=True,
-        )
+    
 
     grouped: dict[str, list[dict]] = {lv: [] for lv in _TAXONOMY}
     for sig in signals:

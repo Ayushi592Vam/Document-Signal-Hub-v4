@@ -174,54 +174,186 @@ def show_eye_popup(field: str, info: dict, excel_path: str, sheet_name: str) -> 
                 all_rows = list(csv.reader(f))
             if not all_rows:
                 return
+
             n_rows = len(all_rows)
             n_cols = max(len(r) for r in all_rows)
-            r0, r1 = max(0, target_row - 4), min(n_rows, target_row + 4)
+            r0     = max(0, target_row - 4)
+            r1     = min(n_rows, target_row + 4)
 
-            col_headers = "".join(
-                f"<th style='background:{_D_BG2};color:{_D_TXT};font-size:11px;"
-                f"padding:5px 10px;border:1px solid {_D_BDR};font-family:monospace;"
-                f"font-weight:700;text-align:center;'>{get_column_letter(c+1)}</th>"
-                for c in range(n_cols)
-            )
-            thead = (
-                f"<thead><tr>"
-                f"<th style='background:{_D_BG2};color:{_D_TXT};font-size:11px;"
-                f"padding:5px 8px;border:1px solid {_D_BDR};font-family:monospace;font-weight:700;'>#</th>"
-                f"{col_headers}</tr></thead>"
-            )
-            tbody = ""
-            for r_idx in range(r0, r1):
-                row_data = all_rows[r_idx] if r_idx < len(all_rows) else []
-                is_tr    = (r_idx + 1 == target_row)
-                rn_bg    = _D_BLU_BG if is_tr else "#ffffff"
-                rn_color = _D_BLU if is_tr else _D_LBL
-                cells = (
-                    f"<td style='background:{rn_bg};color:{rn_color};font-size:11px;"
-                    f"padding:5px 8px;border:1px solid {_D_BDR};font-family:monospace;"
-                    f"font-weight:bold;text-align:center;'>{r_idx+1}</td>"
-                )
-                for c_idx in range(n_cols):
-                    cell_val = row_data[c_idx] if c_idx < len(row_data) else ""
-                    is_tc    = is_tr and (c_idx + 1 == target_col)
-                    if is_tc:
-                        style = f"background:{_D_YEL_BG};border:2px solid {_D_YEL};color:{_D_TXT};font-weight:bold;"
-                    elif is_tr:
-                        style = f"background:{_D_BLU_BG};border:1px solid #b3c8f5;color:{_D_TXT};"
-                    else:
-                        style = f"background:#ffffff;border:1px solid {_D_BDR};color:{_D_TXT};"
-                    cells += (
-                        f"<td style='{style}font-size:11px;padding:5px 10px;"
-                        f"white-space:normal;word-break:break-word;font-family:monospace;'>{cell_val}</td>"
+            # ── Render CSV as a PIL image with a bounding box ─────────────────
+            try:
+                from PIL import Image, ImageDraw, ImageFont
+
+                COL_W     = 120   # pixels per data column
+                ROW_H     = 28    # pixels per row
+                HDR_W     = 44    # row-number gutter width
+                FONT_SIZE = 11
+                PAD_X     = 6
+                PAD_Y     = 6
+
+                visible_rows = list(range(r0, r1))
+                n_vis        = len(visible_rows)
+
+                img_w = HDR_W + n_cols * COL_W
+                img_h = ROW_H + n_vis * ROW_H   # 1 col-letter header + data rows
+
+                img  = Image.new("RGB", (img_w, img_h), "#ffffff")
+                draw = ImageDraw.Draw(img, "RGBA")
+
+                # Load a monospace font; fall back to default if unavailable
+                try:
+                    font = ImageFont.truetype(
+                        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+                        FONT_SIZE,
                     )
-                tbody += f"<tr>{cells}</tr>"
+                except Exception:
+                    font = ImageFont.load_default()
 
-            st.markdown(
-                f"<div style='overflow-x:auto;border-radius:6px;border:1px solid {_D_BDR};'>"
-                f"<table style='border-collapse:collapse;width:100%;'>"
-                f"{thead}<tbody>{tbody}</tbody></table></div>",
-                unsafe_allow_html=True,
-            )
+                def _cell_x(c_idx: int) -> int:
+                    return HDR_W + c_idx * COL_W
+
+                def _cell_y(r_local: int) -> int:
+                    """y of data row; row 0 of image is the column-letter header."""
+                    return ROW_H + r_local * ROW_H
+
+                # ── Column-letter header row ──────────────────────────────────
+                draw.rectangle([0, 0, img_w, ROW_H], fill="#f1f3f8")
+                draw.rectangle([0, 0, HDR_W, ROW_H], fill="#e8ecf4", outline="#d0d6e8")
+                for c in range(n_cols):
+                    x = _cell_x(c)
+                    draw.rectangle([x, 0, x + COL_W, ROW_H],
+                                   fill="#f1f3f8", outline="#d0d6e8")
+                    draw.text((x + PAD_X, PAD_Y),
+                              get_column_letter(c + 1), fill="#4a5578", font=font)
+
+                # ── Data rows ─────────────────────────────────────────────────
+                for r_local, r_abs in enumerate(visible_rows):
+                    row_data = all_rows[r_abs] if r_abs < len(all_rows) else []
+                    is_tr    = (r_abs + 1 == target_row)
+                    y        = _cell_y(r_local)
+
+                    # Row-number gutter
+                    gutter_bg = "#dbeafe" if is_tr else "#f1f3f8"
+                    gutter_fg = "#1a6fd8" if is_tr else "#4a5578"
+                    draw.rectangle([0, y, HDR_W, y + ROW_H],
+                                   fill=gutter_bg, outline="#d0d6e8")
+                    draw.text((PAD_X, y + PAD_Y), str(r_abs + 1),
+                              fill=gutter_fg, font=font)
+
+                    for c in range(n_cols):
+                        x      = _cell_x(c)
+                        is_tc  = is_tr and (c + 1 == target_col)
+                        if is_tc:
+                            bg = "#fffbeb"
+                        elif is_tr:
+                            bg = "#eff6ff"
+                        else:
+                            bg = "#ffffff"
+                        draw.rectangle([x, y, x + COL_W, y + ROW_H],
+                                       fill=bg, outline="#d0d6e8")
+
+                        cell_val  = str(row_data[c]) if c < len(row_data) else ""
+                        max_chars = max(1, (COL_W - PAD_X * 2) // 7)
+                        if len(cell_val) > max_chars:
+                            cell_val = cell_val[:max_chars - 1] + "…"
+                        draw.text((x + PAD_X, y + PAD_Y),
+                                  cell_val, fill="#0f1117", font=font)
+
+                # ── Bounding box on the target cell ───────────────────────────
+                # Same three-layer style used by the Excel branch:
+                #   1. yellow semi-transparent fill
+                #   2. solid amber outline (width=3)
+                #   3. white inner hairline for contrast
+                if (target_col <= n_cols) and ((target_row - 1) in visible_rows):
+                    r_local = visible_rows.index(target_row - 1)
+                    x1 = _cell_x(target_col - 1)
+                    y1 = _cell_y(r_local)
+                    x2 = x1 + COL_W
+                    y2 = y1 + ROW_H
+
+                    draw.rectangle([x1 + 1, y1 + 1, x2 - 1, y2 - 1],
+                                   fill=(255, 230, 0, 80))
+                    draw.rectangle([x1, y1, x2, y2],
+                                   outline=(245, 158, 11, 255), width=3)
+                    draw.rectangle([x1 + 3, y1 + 3, x2 - 3, y2 - 3],
+                                   outline=(255, 255, 255, 160), width=1)
+
+                    cropped, _, _, _, _ = crop_context(
+                        img, x1, y1, x2, y2, pad_x=300, pad_y=120
+                    )
+                else:
+                    cropped = img
+
+                col_letter = get_column_letter(target_col)
+                st.image(
+                    cropped,
+                    use_container_width=True,
+                    caption=f"Cell {col_letter}{target_row} highlighted in yellow",
+                )
+
+            except Exception as img_err:
+                # ── Fallback: plain HTML table if PIL rendering fails ─────────
+                st.warning(
+                    f"Could not render CSV image ({img_err}) — falling back to table view."
+                )
+
+                col_headers = "".join(
+                    f"<th style='background:{_D_BG2};color:{_D_TXT};font-size:11px;"
+                    f"padding:5px 10px;border:1px solid {_D_BDR};font-family:monospace;"
+                    f"font-weight:700;text-align:center;'>{get_column_letter(c+1)}</th>"
+                    for c in range(n_cols)
+                )
+                thead = (
+                    f"<thead><tr>"
+                    f"<th style='background:{_D_BG2};color:{_D_TXT};font-size:11px;"
+                    f"padding:5px 8px;border:1px solid {_D_BDR};font-family:monospace;"
+                    f"font-weight:700;'>#</th>"
+                    f"{col_headers}</tr></thead>"
+                )
+                tbody = ""
+                for r_idx in range(r0, r1):
+                    row_data = all_rows[r_idx] if r_idx < len(all_rows) else []
+                    is_tr    = (r_idx + 1 == target_row)
+                    rn_bg    = _D_BLU_BG if is_tr else "#ffffff"
+                    rn_color = _D_BLU    if is_tr else _D_LBL
+                    cells    = (
+                        f"<td style='background:{rn_bg};color:{rn_color};font-size:11px;"
+                        f"padding:5px 8px;border:1px solid {_D_BDR};font-family:monospace;"
+                        f"font-weight:bold;text-align:center;'>{r_idx + 1}</td>"
+                    )
+                    for c_idx in range(n_cols):
+                        cell_val = row_data[c_idx] if c_idx < len(row_data) else ""
+                        is_tc    = is_tr and (c_idx + 1 == target_col)
+                        if is_tc:
+                            style = (
+                                f"background:{_D_YEL_BG};border:2px solid {_D_YEL};"
+                                f"color:{_D_TXT};font-weight:bold;"
+                            )
+                        elif is_tr:
+                            style = (
+                                f"background:{_D_BLU_BG};border:1px solid #b3c8f5;"
+                                f"color:{_D_TXT};"
+                            )
+                        else:
+                            style = (
+                                f"background:#ffffff;border:1px solid {_D_BDR};"
+                                f"color:{_D_TXT};"
+                            )
+                        cells += (
+                            f"<td style='{style}font-size:11px;padding:5px 10px;"
+                            f"white-space:normal;word-break:break-word;"
+                            f"font-family:monospace;'>{cell_val}</td>"
+                        )
+                    tbody += f"<tr>{cells}</tr>"
+
+                st.markdown(
+                    f"<div style='overflow-x:auto;border-radius:6px;"
+                    f"border:1px solid {_D_BDR};'>"
+                    f"<table style='border-collapse:collapse;width:100%;'>"
+                    f"{thead}<tbody>{tbody}</tbody></table></div>",
+                    unsafe_allow_html=True,
+                )
+
         except Exception as e:
             st.error(f"CSV preview error: {e}")
         return

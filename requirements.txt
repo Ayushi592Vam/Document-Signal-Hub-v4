@@ -1,0 +1,11 @@
+streamlit>=1.35.0
+openpyxl>=3.1.2
+Pillow>=10.0.0
+python-dotenv>=1.0.0
+azure-core
+azure-ai-formrecognizer
+python-docx
+docx2txt
+pymupdf
+openai
+pyyaml

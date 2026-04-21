@@ -1,0 +1,441 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# config/medical.yaml
+#
+# Field extraction config for Medical documents.
+# Covers: Medical Records, Medical Bills, Explanation of Benefits (EOB),
+#         Treatment Notes, Independent Medical Evaluations (IME),
+#         Operative Reports, Pharmacy Records, Disability Reports.
+# ─────────────────────────────────────────────────────────────────────────────
+
+doc_type: Medical
+icon: "🏥"
+color: "#2563eb"
+bg: "rgba(37,99,235,0.06)"
+
+role: >
+  You are a medical claims analyst specialising in insurance medical documents,
+  including medical records, billing statements, EOBs, treatment notes, and
+  independent medical evaluations across workers' compensation, auto, and
+  liability lines of insurance.
+
+classification_keywords:
+  - patient name
+  - date of service
+  - diagnosis
+  - icd
+  - cpt
+  - procedure code
+  - provider
+  - npi
+  - billing
+  - treatment
+  - medical record
+  - explanation of benefits
+  - eob
+  - discharge
+  - prescription
+  - rx
+  - physician
+  - hospital
+  - clinic
+  - physical therapy
+  - surgery
+  - operative
+  - radiology
+  - laboratory
+  - medical history
+  - chief complaint
+  - assessment and plan
+  - independent medical
+
+subtype_keywords:
+  bill:
+    - invoice
+    - statement
+    - billing
+    - amount due
+    - total charges
+    - amount billed
+    - patient responsibility
+    - remittance
+    - claim submitted
+    - claim number
+    - date of service
+    - procedure code
+    - cpt
+
+  eob:
+    - explanation of benefits
+    - eob
+    - allowed amount
+    - plan paid
+    - member responsibility
+    - deductible applied
+    - co-insurance
+    - not covered
+    - network
+    - in-network
+    - out-of-network
+
+  record:
+    - medical record
+    - clinical notes
+    - progress note
+    - soap note
+    - chief complaint
+    - history of present illness
+    - hpi
+    - physical examination
+    - assessment
+    - plan
+    - discharge summary
+    - operative report
+
+  ime:
+    - independent medical evaluation
+    - independent medical examination
+    - ime
+    - evaluating physician
+    - maximum medical improvement
+    - mmi
+    - causation opinion
+    - work restrictions
+    - functional capacity
+
+# ── Core entities present in ALL Medical document types ──────────────────────
+entities:
+
+  # ── Patient ───────────────────────────────────────────────────────────────
+  - name: Patient Name
+    aliases: [Patient, Patient Name, Claimant Name, Member Name]
+    required: true
+    type: string
+
+  - name: Patient Date of Birth
+    aliases: [DOB, Date of Birth, Patient DOB, Birth Date]
+    required: true
+    type: date
+
+  - name: Patient Gender
+    aliases: [Gender, Sex, Patient Gender, Patient Sex]
+    required: false
+    type: string
+
+  - name: Patient ID
+    aliases: [Patient ID, Medical Record Number, MRN, Account Number, Patient Account, Chart Number]
+    required: false
+    type: string
+
+  - name: Patient Address
+    aliases: [Patient Address, Home Address, Mailing Address, Patient Mailing Address]
+    required: false
+    type: address
+
+  - name: Patient Phone
+    aliases: [Patient Phone, Contact Number, Member Phone, Home Phone]
+    required: false
+    type: phone
+
+  # ── Insurance / Coverage ──────────────────────────────────────────────────
+  - name: Insurance ID
+    aliases: [Insurance ID, Member ID, Insurance Member Number, Insurance Number, Subscriber ID]
+    required: false
+    type: string
+
+  - name: Group Number
+    aliases: [Group Number, "Group #", Group ID, Plan Number]
+    required: false
+    type: string
+
+  - name: Insurance Company
+    aliases: [Insurance Company, Payer, Insurer, Carrier, Health Plan]
+    required: false
+    type: string
+
+  - name: Authorization Number
+    aliases: [Authorization Number, Auth Number, Pre-Auth, Prior Auth Number]
+    required: false
+    type: string
+
+  # ── Provider ──────────────────────────────────────────────────────────────
+  - name: Provider Name
+    aliases: [Provider, Physician, Doctor, Attending Physician, Provider Name, Treating Physician]
+    required: true
+    type: string
+
+  - name: Provider NPI
+    aliases: [NPI, NPI Number, Provider NPI, National Provider Identifier]
+    required: false
+    type: string
+
+  - name: Provider Facility
+    aliases: [Facility, Hospital, Clinic, Facility Name, Provider Facility, Medical Facility]
+    required: false
+    type: string
+
+  - name: Provider Address
+    aliases: [Provider Address, Facility Address, Office Address, Practice Address]
+    required: false
+    type: address
+
+  - name: Referring Physician
+    aliases: [Referring Physician, Referring Provider, Referral Source]
+    required: false
+    type: string
+
+  # ── Date & Injury ─────────────────────────────────────────────────────────
+  - name: Date of Service
+    aliases: [Date of Service, DOS, Service Date, Treatment Date, Dates of Service]
+    required: true
+    type: date
+
+  - name: Date of Injury
+    aliases: [Date of Injury, DOI, Injury Date, Date of Accident, Date of Loss]
+    required: false
+    type: date
+
+  - name: Date of Admission
+    aliases: [Date of Admission, Admission Date, Admitted, Date Admitted]
+    required: false
+    type: date
+
+  - name: Date of Discharge
+    aliases: [Date of Discharge, Discharge Date, Discharged, Discharge]
+    required: false
+    type: date
+
+  # ── Diagnosis ─────────────────────────────────────────────────────────────
+  - name: Primary Diagnosis
+    aliases: [Diagnosis, Primary Diagnosis, Principal Diagnosis, DX, Diagnosis Code, Assessment]
+    required: true
+    type: string
+
+  - name: Primary ICD Code
+    aliases: [ICD Code, ICD-10, ICD-10 Code, Primary ICD, Diagnosis Code, ICD-10-CM]
+    required: false
+    type: string
+
+  - name: Secondary Diagnoses
+    aliases: [Secondary Diagnosis, Additional Diagnoses, Other Diagnoses, Secondary ICD Codes]
+    required: false
+    type: text
+
+  - name: Chief Complaint
+    aliases: [Chief Complaint, CC, Presenting Complaint, Reason for Visit]
+    required: false
+    type: text
+
+  # ── Treatment & Procedures ────────────────────────────────────────────────
+  - name: Procedure Codes
+    aliases: [Procedure Codes, CPT Codes, CPT, HCPCS, Service Codes]
+    required: false
+    type: string
+
+  - name: Treatment Description
+    aliases: [Treatment, Treatment Description, Services Rendered, Procedures, Plan, Treatment Plan]
+    required: false
+    type: text
+
+  - name: Medications Prescribed
+    aliases: [Medications, Prescriptions, Drugs, Medications Prescribed, Rx]
+    required: false
+    type: text
+
+  # ── Billing ───────────────────────────────────────────────────────────────
+  - name: Total Charges
+    aliases: [Billing Amount, Total Charges, Amount Billed, Charges, Total Bill]
+    required: false
+    type: currency
+
+  - name: Amount Paid
+    aliases: [Amount Paid, Payment, Paid Amount, Insurer Paid, Plan Paid]
+    required: false
+    type: currency
+
+  - name: Amount Denied
+    aliases: [Amount Denied, Denied Amount, Not Covered, Non-Covered Amount]
+    required: false
+    type: currency
+
+  - name: Adjustment Amount
+    aliases: [Adjustment, Adjustment Amount, Contractual Adjustment, Write-Off]
+    required: false
+    type: currency
+
+  - name: Patient Responsibility
+    aliases: [Patient Responsibility, Patient Owes, Co-pay, Deductible Applied, Member Responsibility, Balance Due]
+    required: false
+    type: currency
+
+# ── Sub-type-specific entities ────────────────────────────────────────────────
+subtypes:
+
+  bill:
+    - name: Claim Submitted Amount
+      aliases: [Amount Submitted, Claim Amount, Submitted Charges]
+      required: false
+      type: currency
+
+    - name: Remittance Date
+      aliases: [Remittance Date, Payment Date, Check Date, EFT Date]
+      required: false
+      type: date
+
+    - name: Service Facility
+      aliases: [Service Facility, Place of Service, POS Code]
+      required: false
+      type: string
+
+  eob:
+    - name: Allowed Amount
+      aliases: [Allowed Amount, Allowable, Plan Allowable, Negotiated Rate]
+      required: false
+      type: currency
+
+    - name: Deductible Applied
+      aliases: [Deductible, Deductible Applied, Applied to Deductible]
+      required: false
+      type: currency
+
+    - name: Coinsurance Amount
+      aliases: [Coinsurance, Co-Insurance Amount, Member Coinsurance]
+      required: false
+      type: currency
+
+    - name: Network Status
+      aliases: [Network Status, In-Network, Out-of-Network, Network]
+      required: false
+      type: string
+
+  record:
+    - name: History of Present Illness
+      aliases: [HPI, History of Present Illness, Presenting History]
+      required: false
+      type: text
+
+    - name: Physical Examination Findings
+      aliases: [Physical Examination, Exam Findings, Physical Exam, PE]
+      required: false
+      type: text
+
+    - name: Vital Signs
+      aliases: [Vital Signs, Vitals, BP, Heart Rate, Temperature]
+      required: false
+      type: string
+
+    - name: Discharge Instructions
+      aliases: [Discharge Instructions, Discharge Summary, Follow-up Instructions]
+      required: false
+      type: text
+
+  ime:
+    - name: Evaluating Physician
+      aliases: [Evaluating Physician, IME Physician, Examining Physician]
+      required: false
+      type: string
+
+    - name: Maximum Medical Improvement
+      aliases: [MMI, Maximum Medical Improvement, MMI Status, MMI Date]
+      required: false
+      type: string
+
+    - name: Causation Opinion
+      aliases: [Causation, Causation Opinion, Opinion on Causation, Work Relatedness]
+      required: false
+      type: text
+
+    - name: Work Restrictions
+      aliases: [Work Restrictions, Functional Limitations, Activity Restrictions, Work Capacity]
+      required: false
+      type: text
+
+    - name: Disability Rating
+      aliases: [Disability Rating, Impairment Rating, Permanent Impairment, Whole Person Impairment]
+      required: false
+      type: string
+
+    - name: Recommended Treatment
+      aliases: [Recommended Treatment, Future Treatment, Additional Treatment, IME Recommendations]
+      required: false
+      type: text
+
+# ── Type-specific assessment fields ──────────────────────────────────────────
+type_specific:
+  - name: Severity
+    description: >
+      Medical severity of the condition/injury
+      (Minor / Moderate / Serious / Critical / Fatal).
+
+  - name: Medical Complexity
+    aliases: [Complexity]
+    description: >
+      Complexity of treatment required and expected recovery timeline.
+
+  - name: Treatment Duration
+    description: >
+      Estimated or actual treatment duration and expected recovery period.
+
+  - name: Disability Type
+    description: >
+      Type and extent of any disability (Temporary Total / Temporary Partial /
+      Permanent Partial / Permanent Total).
+
+  - name: MMI Status
+    description: >
+      Whether maximum medical improvement has been reached, and if so, when.
+
+  - name: Causation Opinion
+    description: >
+      Whether the treatment is causally related to the claimed incident/injury.
+
+  - name: Fraud Indicator
+    description: >
+      Any indicators of potential billing fraud, upcoding, or unnecessary treatment.
+
+  - name: Recommended IME
+    description: >
+      Whether an independent medical evaluation is recommended.
+
+# ── Signal detection taxonomy ─────────────────────────────────────────────────
+signals:
+  types:
+    - severity
+    - medical_complexity
+    - fraud_indicator
+    - coverage_issue
+  severity_triggers:
+    highly_severe:
+      - fatal
+      - death
+      - cardiac arrest
+      - brain injury
+      - spinal cord
+      - paraplegia
+      - quadriplegia
+      - amputation
+      - coma
+      - icu
+      - intensive care
+      - critical condition
+    high:
+      - surgery
+      - surgical
+      - fracture
+      - hospitalized
+      - admitted
+      - permanent disability
+      - nerve damage
+      - herniated
+      - torn
+    moderate:
+      - physical therapy
+      - conservative treatment
+      - sprain
+      - strain
+      - contusion
+      - laceration
+    low:
+      - routine
+      - follow-up
+      - preventive
+      - minor

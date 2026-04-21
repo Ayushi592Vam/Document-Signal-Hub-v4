@@ -1,0 +1,251 @@
+# ============================================================
+# Duck Creek Claims 6.x — Schema Configuration
+# Place this file in your app's /config directory.
+# ============================================================
+
+schema:
+  version: "Claims 6.x"
+  description: "Duck Creek Claims 6.x transaction format"
+
+# Fields that MUST be present in any valid export
+required_fields:
+  - Claim Id
+  - Claimant Name
+  - Loss Date
+  - Total Incurred
+  - Total Paid
+  - Reserve
+  - Policy Number
+  - Claim Status
+
+# Full catalogue of fields accepted by this schema
+accepted_fields:
+  - Claim Id
+  - Transaction Id
+  - Claimant Name
+  - Loss Date
+  - Date Reported
+  - Total Incurred
+  - Total Paid
+  - Reserve
+  - Indemnity Paid
+  - Medical Paid
+  - Expense Paid
+  - Policy Number
+  - Policy Effective Date
+  - Policy Expiry Date
+  - Claim Status
+  - Cause of Loss
+  - Description of Loss
+  - Insured Name
+  - Carrier Name
+  - Line of Business
+  - Adjuster Id
+  - Adjuster Name
+  - Office Code
+  - Jurisdiction
+  - State Code
+  - Deductible Amount
+  - Subrogation Flag
+  - Recovery Amount
+  - Litigation Flag
+  - Date Closed
+  - Date Reopened
+  - Last Updated Date
+  - Notes
+
+# Aliases: how each schema field maps from common Excel column names
+field_aliases:
+  Claim Id:
+    - claim_id
+    - claim number
+    - claim no
+    - claim#
+    - claimid
+    - claim ref
+    - file number
+    - file no
+  Claimant Name:
+    - claimant name
+    - claimant
+    - insured name
+    - name
+    - injured party
+    - plaintiff
+  Loss Date:
+    - date of loss
+    - loss date
+    - loss dt
+    - date of accident
+    - incident date
+    - occurrence date
+  Date Reported:
+    - date reported
+    - reported date
+    - report date
+    - date filed
+  Total Incurred:
+    - total incurred
+    - incurred
+    - total incurred amount
+    - total reserve
+  Total Paid:
+    - total paid
+    - amount paid
+    - paid amount
+    - payments
+  Reserve:
+    - reserve
+    - outstanding reserve
+    - case reserve
+    - open reserve
+  Indemnity Paid:
+    - indemnity paid
+    - indemnity
+    - wage loss paid
+    - disability paid
+  Medical Paid:
+    - medical paid
+    - medical
+    - med paid
+    - medical expenses paid
+  Expense Paid:
+    - expense paid
+    - expense
+    - legal expense
+    - allocated expense
+    - alae
+  Claim Status:
+    - status
+    - claim status
+    - open/closed
+    - file status
+  Line of Business:
+    - line of business
+    - lob
+    - coverage line
+    - coverage type
+    - product line
+  Policy Number:
+    - policy number
+    - policy no
+    - policy#
+    - policy id
+    - pol no
+  Policy Effective Date:
+    - policy effective date
+    - policy start date
+    - effective date
+    - policy period start
+    - pol eff date
+  Policy Expiry Date:
+    - policy expiry date
+    - policy end date
+    - expiry date
+    - policy period end
+    - pol exp date
+    - expiration date
+  Insured Name:
+    - insured name
+    - insured
+    - employer name
+    - named insured
+  Carrier Name:
+    - carrier
+    - carrier name
+    - insurance company
+    - insurer
+  Description of Loss:
+    - description of loss
+    - loss description
+    - description
+    - narrative
+    - loss narrative
+  Cause of Loss:
+    - cause of loss
+    - cause
+    - type of loss
+    - peril
+    - loss cause
+  Adjuster Id:
+    - adjuster id
+    - adjuster_id
+    - examiner id
+    - handler id
+  Adjuster Name:
+    - adjuster name
+    - adjuster
+    - examiner
+    - claims handler
+    - assigned adjuster
+  Office Code:
+    - office code
+    - office
+    - branch code
+    - branch
+    - location code
+  Jurisdiction:
+    - jurisdiction
+    - state jurisdiction
+    - jur
+  State Code:
+    - state code
+    - state
+    - st
+    - state abbr
+  Deductible Amount:
+    - deductible
+    - deductible amount
+    - ded amount
+  Subrogation Flag:
+    - subrogation flag
+    - subrogation
+    - subro
+    - subro flag
+  Recovery Amount:
+    - recovery amount
+    - recovery
+    - recoveries
+  Litigation Flag:
+    - litigation flag
+    - litigation
+    - litigated
+    - in litigation
+  Date Closed:
+    - date closed
+    - closed date
+    - closure date
+  Date Reopened:
+    - date reopened
+    - reopen date
+    - reopened date
+  Last Updated Date:
+    - last updated date
+    - last updated
+    - last activity date
+    - last activity
+    - last modified
+  Notes:
+    - notes
+    - comments
+    - remarks
+
+# Confidence thresholds (override global per field)
+confidence:
+  global_threshold: 80
+  field_thresholds:
+    Claim Id: 85
+    Loss Date: 80
+    Total Incurred: 80
+    Total Paid: 80
+    Reserve: 80
+    Policy Number: 85
+    Claim Status: 75
+
+# Export settings
+export:
+  format: "DuckCreek.Claims.Transaction.v6"
+  transaction_type: "UPDATE"
+  currency: "USD"
+  include_confidence: true
+  include_edit_flag: true

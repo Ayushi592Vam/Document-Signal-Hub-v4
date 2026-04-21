@@ -1,0 +1,318 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# config/loss_run.yaml
+#
+# Field extraction config for Loss Run documents.
+# Covers: TPA Loss Runs, Carrier Loss Runs, Portfolio Summary Reports,
+#         Claims History Reports, Experience Reports.
+# ─────────────────────────────────────────────────────────────────────────────
+
+doc_type: Loss Run
+icon: "📊"
+color: "#059669"
+bg: "rgba(5,150,105,0.06)"
+
+role: >
+  You are a TPA loss run analyst specialising in insurance claims portfolio
+  analysis, with expertise in interpreting loss run reports, experience mod
+  calculations, reserve adequacy, and trend analysis across all lines of insurance.
+
+classification_keywords:
+  - loss run
+  - claims history
+  - loss history
+  - loss summary
+  - claims summary
+  - total incurred
+  - total paid
+  - reserve
+  - open claims
+  - closed claims
+  - experience report
+  - claims experience
+  - loss ratio
+  - tpa
+  - third party administrator
+  - as of date
+  - evaluation date
+  - run date
+  - policy period
+
+subtype_keywords:
+  workers_comp:
+    - workers compensation
+    - workers' compensation
+    - work comp
+    - wc
+    - occupational injury
+    - indemnity
+    - medical only
+    - lost time
+    - return to work
+    - mod
+    - experience modification
+
+  auto:
+    - auto liability
+    - commercial auto
+    - vehicle
+    - fleet
+    - collision
+    - comprehensive
+    - liability limit
+
+  general_liability:
+    - general liability
+    - gl
+    - premises
+    - products liability
+    - completed operations
+    - bodily injury liability
+    - property damage liability
+
+  property:
+    - property
+    - building
+    - contents
+    - business personal property
+    - inland marine
+    - equipment breakdown
+
+# ── Core entities present in ALL Loss Run types ───────────────────────────────
+entities:
+
+  # ── Report metadata ───────────────────────────────────────────────────────
+  - name: Report Date
+    aliases: [Report Date, As of Date, Run Date, Evaluation Date, Date of Report, Prepared Date]
+    required: true
+    type: date
+
+  - name: Policy Number
+    aliases: [Policy Number, Policy No., "Policy #"]
+    required: true
+    type: string
+
+  - name: Policy Period Start
+    aliases: [Policy Period Start, Policy From, Effective Date, Policy Inception, Coverage From]
+    required: true
+    type: date
+
+  - name: Policy Period End
+    aliases: [Policy Period End, Policy To, Expiration Date, Policy Expiry, Coverage To]
+    required: true
+    type: date
+
+  - name: Named Insured
+    aliases: [Named Insured, Insured Name, Policyholder, Account Name]
+    required: true
+    type: string
+
+  - name: Carrier
+    aliases: [Carrier, Insurance Company, Insurer, Underwriter]
+    required: false
+    type: string
+
+  - name: TPA Name
+    aliases: [TPA, TPA Name, Third Party Administrator, Claims Administrator, Administrator]
+    required: false
+    type: string
+
+  - name: Line of Business
+    aliases: [Line of Business, LOB, Coverage Line, Type of Insurance, Coverage Type]
+    required: true
+    type: string
+
+  # ── Claims counts ─────────────────────────────────────────────────────────
+  - name: Total Claims Count
+    aliases: [Total Claims, Number of Claims, Total Claims Count, Claim Count]
+    required: true
+    type: integer
+
+  - name: Open Claims Count
+    aliases: [Open Claims, Number of Open Claims, Open Count, Claims Open]
+    required: false
+    type: integer
+
+  - name: Closed Claims Count
+    aliases: [Closed Claims, Number of Closed Claims, Closed Count, Claims Closed]
+    required: false
+    type: integer
+
+  - name: Litigated Claims Count
+    aliases: [Litigated Claims, Litigation Count, In Litigation, Litigated]
+    required: false
+    type: integer
+
+  # ── Financial summary ─────────────────────────────────────────────────────
+  - name: Total Incurred
+    aliases: [Total Incurred, Total Incurred Loss, Total Losses Incurred, Incurred Amount]
+    required: true
+    type: currency
+
+  - name: Total Paid
+    aliases: [Total Paid, Total Paid to Date, Paid to Date, Amount Paid, Total Payments]
+    required: true
+    type: currency
+
+  - name: Total Reserve
+    aliases: [Total Reserve, Outstanding Reserve, Reserve Balance, Open Reserve, IBNR Reserve, Total Outstanding]
+    required: true
+    type: currency
+
+  - name: Total Indemnity Paid
+    aliases: [Indemnity Paid, Total Indemnity, Indemnity Payments]
+    required: false
+    type: currency
+
+  - name: Total Medical Paid
+    aliases: [Medical Paid, Total Medical, Medical Payments, Medical Costs]
+    required: false
+    type: currency
+
+  - name: Total Expense Paid
+    aliases: [Expense Paid, Total Expense, ALAE, DCC, LAE, Legal Expense, Allocated Loss Adjustment Expense]
+    required: false
+    type: currency
+
+  - name: Largest Claim Amount
+    aliases: [Largest Claim, Largest Loss, Maximum Claim, Highest Loss]
+    required: false
+    type: currency
+
+  - name: Average Claim Amount
+    aliases: [Average Claim, Average Loss, Mean Claim, Average Incurred]
+    required: false
+    type: currency
+
+  - name: Loss Ratio
+    aliases: [Loss Ratio, Pure Loss Ratio, Incurred Loss Ratio]
+    required: false
+    type: percentage
+
+  - name: Combined Ratio
+    aliases: [Combined Ratio, Combined Loss Ratio]
+    required: false
+    type: percentage
+
+  # ── Premium ───────────────────────────────────────────────────────────────
+  - name: Written Premium
+    aliases: [Written Premium, Premium, Total Premium, Policy Premium]
+    required: false
+    type: currency
+
+  - name: Earned Premium
+    aliases: [Earned Premium, Pro-Rated Premium]
+    required: false
+    type: currency
+
+# ── Sub-type-specific entities ────────────────────────────────────────────────
+subtypes:
+
+  workers_comp:
+    - name: Indemnity Claims Count
+      aliases: [Indemnity Claims, Lost Time Claims, LT Claims, Comp Claims]
+      required: false
+      type: integer
+
+    - name: Medical Only Claims Count
+      aliases: [Medical Only Claims, MO Claims, Medical Only Count]
+      required: false
+      type: integer
+
+    - name: Average Days Lost
+      aliases: [Average Days Lost, ADL, Lost Days Average, Mean Days Out]
+      required: false
+      type: integer
+
+    - name: Experience Modification Factor
+      aliases: [Experience Mod, E-Mod, MOD, Experience Modification Factor, Mod Factor]
+      required: false
+      type: string
+
+    - name: Return to Work Rate
+      aliases: [Return to Work Rate, RTW Rate, Return to Work]
+      required: false
+      type: percentage
+
+  general_liability:
+    - name: BI Claims Count
+      aliases: [Bodily Injury Claims, BI Claims, BI Count]
+      required: false
+      type: integer
+
+    - name: PD Claims Count
+      aliases: [Property Damage Claims, PD Claims, PD Count]
+      required: false
+      type: integer
+
+    - name: Occurrence Limit
+      aliases: [Occurrence Limit, Per Occurrence Limit, Each Occurrence]
+      required: false
+      type: currency
+
+    - name: Aggregate Limit
+      aliases: [Aggregate Limit, General Aggregate, Total Aggregate]
+      required: false
+      type: currency
+
+# ── Type-specific assessment fields ──────────────────────────────────────────
+type_specific:
+  - name: Portfolio Severity
+    description: >
+      Overall portfolio severity level based on average claim size and
+      large loss frequency.
+
+  - name: Frequency Trend
+    aliases: [Frequency]
+    description: >
+      Direction and magnitude of claim frequency trend
+      (Improving / Stable / Worsening).
+
+  - name: Litigation Rate
+    description: >
+      Percentage of claims that are in litigation or have been litigated.
+
+  - name: Large Loss Count
+    description: >
+      Number of claims exceeding the large loss threshold.
+
+  - name: Large Loss Threshold
+    description: >
+      Dollar threshold used to define a large loss for this account.
+
+  - name: Recommended Reserve Action
+    description: >
+      Recommendation on reserve adequacy — increase, release, or maintain.
+
+# ── Signal detection taxonomy ─────────────────────────────────────────────────
+signals:
+  types:
+    - severity
+    - legal_escalation
+    - fraud_indicator
+    - coverage_issue
+  severity_triggers:
+    highly_severe:
+      - catastrophic
+      - fatality
+      - fatal
+      - death
+      - large loss
+      - reserve strengthening
+      - adverse development
+    high:
+      - increasing trend
+      - deteriorating
+      - worsening
+      - high frequency
+      - above benchmark
+      - above average
+    moderate:
+      - open reserves
+      - litigation
+      - litigated
+      - volatile
+    low:
+      - improving
+      - stable
+      - below average
+      - favorable

@@ -1,0 +1,426 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# config/legal.yaml
+#
+# Field extraction config for Legal documents.
+# Covers: Civil Complaints, Settlement Agreements, Docket Sheets,
+#         Attorney Letters, Court Orders, Demand Letters.
+#
+# Sub-types auto-detected from content keywords (see `subtype_keywords`).
+# ─────────────────────────────────────────────────────────────────────────────
+
+doc_type: Legal
+icon: "⚖️"
+color: "#7c3aed"
+bg: "rgba(124,58,237,0.06)"
+
+role: >
+  You are a legal claims analyst specialising in insurance litigation documents,
+  with expertise in civil complaints, settlement agreements, docket analysis,
+  and coverage disputes across all lines of insurance.
+
+classification_keywords:
+  - case number
+  - filing date
+  - plaintiff
+  - defendant
+  - complaint
+  - settlement
+  - docket
+  - court
+  - circuit
+  - district court
+  - cause of action
+  - attorney
+  - counsel
+  - v.
+  - vs.
+  - lawsuit
+  - litigation
+  - judgment
+  - civil action
+  - demand letter
+  - reservation of rights
+
+subtype_keywords:
+  complaint:
+    - complaint for damages
+    - civil complaint
+    - complaint and demand
+    - jury trial demanded
+    - count i
+    - count ii
+    - prayer for relief
+    - wherefore
+    - hereby alleges
+    - factual allegations
+    - cause of action
+    - negligence
+    - wrongful death
+
+  settlement:
+    - settlement agreement
+    - general release
+    - settlement amount
+    - releasor
+    - releasee
+    - release and discharge
+    - confidential settlement
+    - in full settlement
+    - payment schedule
+    - dismissal with prejudice
+    - allocation
+
+  docket:
+    - docket
+    - docket prepared for
+    - last refreshed
+    - case last update
+    - filing court
+    - filing location
+    - matter type
+    - practice area
+    - status
+    - trellis
+    - case details
+
+  demand_letter:
+    - demand letter
+    - demand for payment
+    - demand for settlement
+    - this letter serves as formal demand
+    - unless payment is received
+    - reserves all rights
+
+# ── Core entities present in ALL Legal document types ────────────────────────
+entities:
+
+  # ── Case identifiers ──────────────────────────────────────────────────────
+  - name: Case Number
+    aliases: [Case No., "Case #", Docket No., Case Number, Civil Action No.]
+    required: true
+    type: string
+
+  - name: Filing Date
+    aliases: [Date Filed, Filing Date, Date of Filing, Complaint Filed]
+    required: true
+    type: date
+
+  - name: Last Refreshed
+    aliases: [Last Refreshed, Date Refreshed, Last Updated, Docket Refreshed]
+    required: false
+    type: date
+
+  - name: Filing Location
+    aliases: [Filing Location, Jurisdiction, Filed In, County, Venue]
+    required: false
+    type: string
+
+  - name: Filing Court
+    aliases: [Court, Filing Court, Court Name, District Court, Circuit Court]
+    required: false
+    type: string
+
+  - name: Judge
+    aliases: [Judge, Presiding Judge, Honorable, Hon., Assigned Judge]
+    required: false
+    type: string
+
+  - name: Status
+    aliases: [Status, Case Status, Matter Status, Current Status]
+    required: false
+    type: string
+
+  - name: Category
+    aliases: [Category, Case Category, Case Type]
+    required: false
+    type: string
+
+  - name: Practice Area
+    aliases: [Practice Area, Area of Law, Legal Area]
+    required: false
+    type: string
+
+  - name: Matter Type
+    aliases: [Matter Type, Case Sub-Type, Sub-Category]
+    required: false
+    type: string
+
+  - name: Case Last Update
+    aliases: [Case Last Update, Last Activity, Last Update Date]
+    required: false
+    type: string
+
+  - name: Docket Prepared For
+    aliases: [Docket Prepared For, Prepared For, Attorney, Docket For]
+    required: false
+    type: string
+
+  - name: Circuit
+    aliases: [Circuit, Circuit Number, Judicial Circuit]
+    required: false
+    type: string
+
+  - name: Division
+    aliases: [Division, Court Division, Section]
+    required: false
+    type: string
+
+  # ── Parties ───────────────────────────────────────────────────────────────
+  - name: Plaintiff Name
+    aliases: [Plaintiff, Claimant, Petitioner, Plaintiff Name, Settling Plaintiff]
+    required: true
+    type: string
+
+  - name: Plaintiff Attorney
+    aliases: [Plaintiff Attorney, Plaintiff Counsel, Counsel for Plaintiff, Plaintiff's Attorney, Plaintiff's Counsel]
+    required: false
+    type: string
+
+  - name: Plaintiff Attorney Firm
+    aliases: [Plaintiff Firm, Plaintiff Attorney Firm, Plaintiff Law Firm, Counsel Firm, Law Firm for Plaintiff]
+    required: false
+    type: string
+
+  - name: Defendant Name
+    aliases: [Defendant, Respondent, Defendant Name, Settling Defendant, Defendants]
+    required: true
+    type: string
+
+  - name: Defendant Attorney
+    aliases: [Defendant Attorney, Defense Counsel, Counsel for Defendant, Defense Attorney]
+    required: false
+    type: string
+
+  - name: Defendant Attorney Firm
+    aliases: [Defendant Firm, Defendant Attorney Firm, Defense Law Firm]
+    required: false
+    type: string
+
+  # ── Insurance / Coverage ──────────────────────────────────────────────────
+  - name: Insurance Carrier
+    aliases: [Insurer, Insurance Company, Carrier, Insurance Carrier, Insurance Corporation]
+    required: false
+    type: string
+
+  - name: Policy Number
+    aliases: [Policy No., Policy Number, "Policy #", Policy ID]
+    required: false
+    type: string
+
+  - name: Coverage Type
+    aliases: [Coverage Type, Line of Business, Coverage, Type of Coverage]
+    required: false
+    type: string
+
+  - name: Line of Business
+    aliases: [Line of Business, LOB, Insurance Line]
+    required: false
+    type: string
+
+  # ── Incident / Claim ──────────────────────────────────────────────────────
+  - name: Incident Date
+    aliases: [Incident Date, Date of Incident, Date of Loss, Date of Accident, Date of Injury, Date of Occurrence]
+    required: false
+    type: date
+
+  - name: Incident Location
+    aliases: [Incident Location, Location of Incident, Place of Loss, Location of Accident, Address of Incident]
+    required: false
+    type: string
+
+  - name: Cause of Loss
+    aliases: [Cause of Loss, Cause of Action, Basis of Claim, Theory of Liability]
+    required: false
+    type: string
+
+  - name: Cause of Action
+    aliases: [Cause of Action, Claims Asserted, Legal Theory, Count]
+    required: false
+    type: text
+
+  - name: Case Complaint Summary
+    aliases: [Case Complaint Summary, Complaint Summary, Case Summary, Overview, Summary of Allegations, Factual Background]
+    required: false
+    type: text
+
+  - name: Damages Sought
+    aliases: [Damages Sought, Amount in Controversy, Damages, Relief Sought, Prayer for Relief Amount, Amount Demanded]
+    required: false
+    type: currency
+
+# ── Sub-type-specific entities ────────────────────────────────────────────────
+subtypes:
+
+  complaint:
+    - name: Jurisdiction Basis
+      aliases: [Jurisdiction, Basis for Jurisdiction, Subject Matter Jurisdiction]
+      required: false
+      type: string
+
+    - name: Counts Alleged
+      aliases: [Counts, Legal Counts, Causes of Action Alleged]
+      required: false
+      type: text
+
+    - name: Jury Trial Demanded
+      aliases: [Jury Trial, Jury Demand, Trial by Jury]
+      required: false
+      type: boolean
+
+    - name: Statute of Limitations Basis
+      aliases: [Statute of Limitations, Limitations Period, SOL Basis]
+      required: false
+      type: string
+
+    - name: Certificate of Merit
+      aliases: [Certificate of Merit, Expert Certificate, Medical Certificate]
+      required: false
+      type: boolean
+
+  settlement:
+    - name: Settlement Reference
+      aliases: [Settlement Reference, SA Number, Settlement ID]
+      required: false
+      type: string
+
+    - name: Settlement Date
+      aliases: [Settlement Date, Agreement Date, Effective Date, Date of Agreement]
+      required: true
+      type: date
+
+    - name: Total Settlement Amount
+      aliases: [Settlement Amount, Total Settlement, Settlement Sum, Total Settlement Amount]
+      required: true
+      type: currency
+
+    - name: Settlement Allocation - Wrongful Death
+      aliases: [Wrongful Death Allocation, Wrongful Death Damages, Allocation - Wrongful Death]
+      required: false
+      type: currency
+
+    - name: Settlement Allocation - Pain and Suffering
+      aliases: [Pain and Suffering, Survival Damages, "Pain & Suffering Allocation"]
+      required: false
+      type: currency
+
+    - name: Settlement Allocation - Loss of Consortium
+      aliases: [Loss of Consortium, Consortium Allocation]
+      required: false
+      type: currency
+
+    - name: Payment Deadline
+      aliases: [Payment Due, Payment Schedule, Days to Pay, Wire Transfer Deadline]
+      required: false
+      type: string
+
+    - name: Dismissal Deadline
+      aliases: [Dismissal Deadline, Days to File Dismissal, Stipulation Deadline]
+      required: false
+      type: string
+
+    - name: Confidentiality Clause
+      aliases: [Confidentiality, Confidentiality Clause, Non-Disclosure, NDA]
+      required: false
+      type: boolean
+
+    - name: Liability Admitted
+      aliases: [Admission of Liability, Liability Admitted, Defendant Admits]
+      required: false
+      type: boolean
+
+    - name: Governing Law
+      aliases: [Governing Law, Choice of Law, Jurisdiction Clause]
+      required: false
+      type: string
+
+    - name: Primary Insurer
+      aliases: [Primary Insurer, Professional Liability Insurer, Insurance Company]
+      required: false
+      type: string
+
+    - name: Insurer Policy Number
+      aliases: [Insurer Policy Number, Primary Insurer Policy No.]
+      required: false
+      type: string
+
+  docket:
+    - name: Case Title
+      aliases: [Case Title, Case Name, Style of Case, Parties Caption]
+      required: false
+      type: string
+
+    - name: Date of Docket Report
+      aliases: [Date, Report Date, Docket Date, Report Prepared Date]
+      required: false
+      type: date
+
+# ── Type-specific assessment fields ──────────────────────────────────────────
+type_specific:
+  - name: Severity
+    description: >
+      Estimated severity level: Low / Moderate / High / Highly Severe.
+      Consider damages amount, injury type, and defendant profile.
+
+  - name: Litigation Stage
+    description: >
+      Current stage of litigation (Pre-Suit / Filed / Discovery /
+      Trial / Settlement / Closed).
+
+  - name: Coverage Issue
+    description: >
+      Any coverage disputes, exclusions, or reservation-of-rights concerns
+      identified in the document.
+
+  - name: Estimated Exposure
+    description: >
+      Best estimate of total monetary exposure including damages, fees, and costs.
+
+  - name: Reservation of Rights
+    description: >
+      Whether a reservation of rights letter has been issued or is warranted.
+
+  - name: Recommended Defense Strategy
+    description: >
+      High-level recommended defense or claims handling approach.
+
+# ── Signal detection taxonomy ─────────────────────────────────────────────────
+signals:
+  types:
+    - severity
+    - legal_escalation
+    - fraud_indicator
+    - coverage_issue
+  severity_triggers:
+    highly_severe:
+      - wrongful death
+      - fatal
+      - death
+      - fatality
+      - punitive damages
+      - class action
+      - multi-party
+      - $1,000,000
+      - $2,000,000
+      - $3,000,000
+      - $4,000,000
+      - $5,000,000
+      - million
+    high:
+      - permanent disability
+      - catastrophic injury
+      - malpractice
+      - negligence
+      - jury trial demanded
+      - significant damages
+      - $500,000
+      - $250,000
+    moderate:
+      - breach of contract
+      - property damage
+      - minor injury
+      - $75,000
+      - $100,000
+    low:
+      - declaratory judgment
+      - administrative claim
+      - small claims

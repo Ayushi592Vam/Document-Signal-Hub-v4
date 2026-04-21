@@ -1,0 +1,221 @@
+# ============================================================
+# Guidewire ClaimCenter 10.x — Schema Configuration
+# Place this file in your app's /config directory.
+# ============================================================
+
+schema:
+  version: "ClaimCenter 10.x"
+  description: "Guidewire ClaimCenter 10.x compatible format"
+
+# Fields that MUST be present in any valid export
+required_fields:
+  - Claim Number
+  - Claimant Name
+  - Loss Date
+  - Total Incurred
+  - Total Paid
+  - Reserve
+  - Status
+  - Line of Business
+  - Policy Number
+
+# Full catalogue of fields accepted by this schema
+accepted_fields:
+  - Claim Number
+  - Claimant Name
+  - Loss Date
+  - Date Reported
+  - Total Incurred
+  - Total Paid
+  - Reserve
+  - Indemnity Paid
+  - Medical Paid
+  - Expense Paid
+  - Status
+  - Line of Business
+  - Policy Number
+  - Policy Period Start
+  - Policy Period End
+  - Carrier
+  - Insured Name
+  - Description of Loss
+  - Cause of Loss
+  - Litigation Flag
+  - Adjuster Name
+  - Adjuster Phone
+  - Branch Code
+  - Department Code
+  - Coverage Type
+  - Deductible
+  - Subrogation Amount
+  - Recovery Amount
+  - Open/Closed
+  - Reopen Date
+  - Last Activity Date
+  - Notes
+
+# Aliases: how each schema field maps from common Excel column names
+field_aliases:
+  Claim Number:
+    - claim_id
+    - claim number
+    - claim no
+    - claim#
+    - claimid
+    - claim ref
+    - file number
+    - file no
+  Claimant Name:
+    - claimant name
+    - claimant
+    - insured name
+    - name
+    - injured party
+    - plaintiff
+  Loss Date:
+    - date of loss
+    - loss date
+    - loss dt
+    - date of accident
+    - incident date
+    - occurrence date
+  Date Reported:
+    - date reported
+    - reported date
+    - report date
+    - date filed
+  Total Incurred:
+    - total incurred
+    - incurred
+    - total incurred amount
+    - total reserve
+  Total Paid:
+    - total paid
+    - amount paid
+    - paid amount
+    - payments
+  Reserve:
+    - reserve
+    - outstanding reserve
+    - case reserve
+    - open reserve
+  Indemnity Paid:
+    - indemnity paid
+    - indemnity
+    - wage loss paid
+    - disability paid
+  Medical Paid:
+    - medical paid
+    - medical
+    - med paid
+    - medical expenses paid
+  Expense Paid:
+    - expense paid
+    - expense
+    - legal expense
+    - allocated expense
+    - alae
+  Status:
+    - status
+    - claim status
+    - open/closed
+    - file status
+  Line of Business:
+    - line of business
+    - lob
+    - coverage line
+    - coverage type
+    - product line
+  Policy Number:
+    - policy number
+    - policy no
+    - policy#
+    - policy id
+    - pol no
+  Insured Name:
+    - insured name
+    - insured
+    - employer name
+    - named insured
+  Description of Loss:
+    - description of loss
+    - loss description
+    - description
+    - narrative
+    - loss narrative
+  Cause of Loss:
+    - cause of loss
+    - cause
+    - type of loss
+    - peril
+    - loss cause
+  Adjuster Name:
+    - adjuster name
+    - adjuster
+    - examiner
+    - claims handler
+    - assigned adjuster
+  Carrier:
+    - carrier
+    - carrier name
+    - insurance company
+    - insurer
+  Litigation Flag:
+    - litigation flag
+    - litigation
+    - litigated
+    - in litigation
+  Branch Code:
+    - branch code
+    - branch
+    - office code
+    - location code
+  Department Code:
+    - department code
+    - department
+    - dept code
+    - dept
+  Deductible:
+    - deductible
+    - deductible amount
+    - ded amount
+  Subrogation Amount:
+    - subrogation amount
+    - subrogation
+    - subro
+    - subro amount
+  Recovery Amount:
+    - recovery amount
+    - recovery
+    - recoveries
+  Reopen Date:
+    - reopen date
+    - reopened date
+    - date reopened
+  Last Activity Date:
+    - last activity date
+    - last activity
+    - last updated
+    - last updated date
+  Notes:
+    - notes
+    - comments
+    - remarks
+
+# Confidence thresholds (override global per field)
+confidence:
+  global_threshold: 80
+  field_thresholds:
+    Claim Number: 85
+    Loss Date: 80
+    Total Incurred: 80
+    Total Paid: 80
+    Reserve: 80
+    Policy Number: 85
+
+# Export settings
+export:
+  format: "Guidewire.ClaimCenter.REST.v1"
+  currency: "USD"
+  include_confidence: true
+  include_edit_flag: true

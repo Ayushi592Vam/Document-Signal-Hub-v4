@@ -1,0 +1,487 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# config/fnol.yaml
+#
+# Field extraction config for FNOL (First Notice of Loss) documents.
+# Covers all FNOL sub-types: Auto/Vehicle, Homeowners/Residential, Commercial Property.
+#
+# HOW IT WORKS:
+#   - `entities`      : Core fields the LLM MUST look for in every FNOL.
+#   - `subtypes`      : Sub-type-specific additional fields, merged in when
+#                       the LLM (or a keyword heuristic) detects the sub-type.
+#   - `type_specific` : Assessment/triage fields always extracted for the Signals tab.
+#   - `signals`       : Signal taxonomy to detect. Mirrors `_SIGNAL_META` in pdf_analysis.py.
+#   - `role`          : System-prompt persona for the LLM.
+#   - `classification_keywords` : Phrases that indicate this doc type.
+#   - `subtype_keywords`        : Phrases that distinguish sub-types.
+# ─────────────────────────────────────────────────────────────────────────────
+
+doc_type: FNOL
+icon: "🚨"
+color: "#dc2626"
+bg: "rgba(220,38,38,0.06)"
+
+role: >
+  You are an expert FNOL (First Notice of Loss) claims intake specialist with deep
+  experience across auto, homeowners, and commercial property insurance claims.
+
+classification_keywords:
+  - first notice of loss
+  - fnol
+  - claim reference
+  - claim number
+  - clm-
+  - notice of loss
+  - claim intake
+  - loss notification
+  - reported by
+  - received by
+
+subtype_keywords:
+  auto:
+    - auto
+    - vehicle
+    - automobile
+    - vin
+    - make
+    - model
+    - driver
+    - collision
+    - motor vehicle
+    - license plate
+    - odometer
+  homeowners:
+    - homeowners
+    - residential
+    - property address
+    - dwelling
+    - home phone
+    - personal property
+    - ale
+    - additional living
+    - habitabl
+    - burst pipe
+    - water damage
+  commercial:
+    - commercial
+    - business name
+    - federal tax id
+    - ein
+    - sic code
+    - business interruption
+    - annual gross revenue
+    - named insured
+    - broker agency
+    - building value
+
+# ── Core entities present in ALL FNOL types ──────────────────────────────────
+entities:
+
+  # ── Claim / Policy identifiers ────────────────────────────────────────────
+  - name: Claim Number
+    aliases: ["Claim #", Claim Reference, Claim Reference Number, CLM, Reference Number]
+    required: true
+    type: string
+
+  - name: Policy Number
+    aliases: ["Policy #", Policy No, Policy ID]
+    required: true
+    type: string
+
+  - name: Date Filed
+    aliases: [Date Received, Date Reported, Report Date, Received Date]
+    required: true
+    type: date
+
+  - name: Received By
+    aliases: [Received By, Filed By, Intake Officer]
+    required: false
+    type: string
+
+  # ── Policyholder / Insured ────────────────────────────────────────────────
+  - name: Policyholder Name
+    aliases: [Full Name, Insured Name, Named Insured, Policy Holder Name, Legal Business Name, Full Name (as on policy)]
+    required: true
+    type: string
+
+  - name: Date of Birth
+    aliases: [DOB, Date of Birth]
+    required: false
+    type: date
+
+  - name: Phone Number
+    aliases: [Phone, Home Phone, Contact Phone, Mobile Phone, Phone (Direct), Primary Contact Phone]
+    required: false
+    type: phone
+
+  - name: Mobile Phone
+    aliases: [Mobile, Cell Phone, Mobile Number]
+    required: false
+    type: phone
+
+  - name: Email Address
+    aliases: [Email, Contact Email, E-mail]
+    required: false
+    type: email
+
+  - name: Insured Address
+    aliases: [Mailing Address, Property Address, Insured Premises Address, Address, Property Address (Insured Location)]
+    required: false
+    type: address
+
+  # ── Loss / Incident ──────────────────────────────────────────────────────
+  - name: Date of Loss
+    aliases: [Loss Date, Date of Incident, Incident Date, Date of Loss]
+    required: true
+    type: date
+
+  - name: Time of Loss
+    aliases: [Time of Loss, Approximate Time of Loss, Time of Incident, Time (approx.)]
+    required: false
+    type: time
+
+  - name: Date Loss Discovered
+    aliases: [Date Discovered, Discovery Date, Date Loss Discovered]
+    required: false
+    type: date
+
+  - name: Location of Loss
+    aliases: [Location of Incident, Loss Location, Incident Location, Location of Loss, Address of Loss]
+    required: false
+    type: address
+
+  - name: Cause of Loss
+    aliases: [Cause of Loss, Loss Cause, Peril, Cause of Damage, Type of Loss]
+    required: true
+    type: string
+
+  - name: Description of Loss
+    aliases: [Detailed Description, Description of How the Incident Occurred, Detailed Narrative of Loss, Description of Loss, Loss Description, Loss Narrative]
+    required: true
+    type: text
+
+  # ── Damage ────────────────────────────────────────────────────────────────
+  - name: Estimated Total Damage
+    aliases: [Estimated Total Loss, Estimated Total Damage, Total Loss Estimate, Estimated Damage Value, Estimated Total Loss ($)]
+    required: false
+    type: currency
+
+  # ── Third-party / Injuries ────────────────────────────────────────────────
+  - name: Any Injuries
+    aliases: ["Any Injuries?", "Bodily Injuries?", "Any Bodily Injuries?", Injuries Reported]
+    required: false
+    type: boolean
+
+  - name: Injury Description
+    aliases: [Nature of Injury, Injury Description, Description of Injuries, Injury Details]
+    required: false
+    type: text
+
+  - name: Medical Facility
+    aliases: [Hospital, "Hospital / Medical Facility", Medical Facility, Treatment Facility]
+    required: false
+    type: string
+
+  # ── Claim handling ────────────────────────────────────────────────────────
+  - name: Adjuster Name
+    aliases: [Adjuster, Claim Handler, Claims Handler, Assigned Adjuster, Adjuster Name]
+    required: false
+    type: string
+
+  - name: Police Report Number
+    aliases: ["Police Report #", Report Number, "Report #", "Police / Fire Report #", "Police Department / Report #"]
+    required: false
+    type: string
+
+  - name: Witness Name
+    aliases: [Witness, Witness Name, Witnesses]
+    required: false
+    type: string
+
+  - name: Witness Phone
+    aliases: [Witness Phone, Witness Contact]
+    required: false
+    type: phone
+
+# ── Sub-type-specific entities (merged when sub-type is detected) ─────────────
+subtypes:
+
+  auto:
+    - name: Vehicle Year
+      aliases: [Year, Vehicle Year]
+      required: false
+      type: string
+
+    - name: Vehicle Make
+      aliases: [Make, Vehicle Make]
+      required: false
+      type: string
+
+    - name: Vehicle Model
+      aliases: [Model, Vehicle Model]
+      required: false
+      type: string
+
+    - name: Vehicle Color
+      aliases: [Color, Vehicle Color]
+      required: false
+      type: string
+
+    - name: VIN
+      aliases: [VIN, Vehicle Identification Number, VIN Number]
+      required: false
+      type: string
+
+    - name: License Plate
+      aliases: [License Plate, "License Plate / State", Plate Number]
+      required: false
+      type: string
+
+    - name: Odometer Reading
+      aliases: [Odometer, Mileage, Odometer Reading]
+      required: false
+      type: string
+
+    - name: Vehicle Drivable
+      aliases: ["Vehicle Drivable?", Is Vehicle Drivable]
+      required: false
+      type: boolean
+
+    - name: Vehicle Location
+      aliases: [Current Location of Vehicle, Vehicle Location, Towed To]
+      required: false
+      type: string
+
+    - name: Preferred Repair Shop
+      aliases: [Repair Shop, Preferred Repair Shop, Preferred Shop]
+      required: false
+      type: string
+
+    - name: Driver License Number
+      aliases: ["Driver's License #", License Number, "DL#"]
+      required: false
+      type: string
+
+    - name: Weather Conditions
+      aliases: [Weather, Weather Conditions, Road Conditions]
+      required: false
+      type: string
+
+    - name: Other Driver Name
+      aliases: [Other Driver, Other Driver Name, Other Party Name]
+      required: false
+      type: string
+
+    - name: Other Driver Phone
+      aliases: [Other Driver Phone, Other Party Phone]
+      required: false
+      type: phone
+
+    - name: Other Vehicle
+      aliases: [Other Vehicle, "Other Vehicle Year / Make / Model", Adverse Vehicle]
+      required: false
+      type: string
+
+    - name: Other Vehicle Insurance
+      aliases: [Other Vehicle Insurance, Adverse Insurance, Third Party Insurance]
+      required: false
+      type: string
+
+    - name: Other Party Policy Number
+      aliases: [Other Party Policy Number, Adverse Policy Number]
+      required: false
+      type: string
+
+  homeowners:
+    - name: Property Type
+      aliases: [Property Type, Type of Property, Dwelling Type]
+      required: false
+      type: string
+
+    - name: Year Property Built
+      aliases: [Year Built, Year Property Built, Year of Construction]
+      required: false
+      type: string
+
+    - name: Square Footage Damaged
+      aliases: [Square Footage of Damaged Area, Damaged Area (sq ft), Sq Ft Damaged]
+      required: false
+      type: string
+
+    - name: Number of Rooms Affected
+      aliases: [Rooms Affected, Number of Rooms, Rooms Damaged]
+      required: false
+      type: string
+
+    - name: Property Habitable
+      aliases: ["Is the property habitable?", Property Habitable, "Habitable?"]
+      required: false
+      type: boolean
+
+    - name: Emergency Contractor
+      aliases: [Emergency Contractor, Mitigation Contractor, Emergency Mitigation Contractor]
+      required: false
+      type: string
+
+    - name: ALE Requested
+      aliases: [ALE Claim Requested, "ALE Requested?", Additional Living Expense Requested]
+      required: false
+      type: boolean
+
+    - name: Temporary Address
+      aliases: [Temporary Address, Relocation Address, Temporary Relocation Address]
+      required: false
+      type: address
+
+    - name: Estimated Monthly Housing Cost
+      aliases: [Monthly Housing Cost, Temporary Housing Cost, Estimated Monthly Housing Cost ($)]
+      required: false
+      type: currency
+
+  commercial:
+    - name: Legal Business Name
+      aliases: [Business Name, Legal Business Name, Company Name]
+      required: true
+      type: string
+
+    - name: DBA Name
+      aliases: [DBA, Trading Name, "DBA / Trading Name"]
+      required: false
+      type: string
+
+    - name: Federal Tax ID
+      aliases: [EIN, "Federal Tax ID / EIN", Tax ID, Federal Tax ID]
+      required: false
+      type: string
+
+    - name: Type of Entity
+      aliases: [Entity Type, Type of Entity, Business Type]
+      required: false
+      type: string
+
+    - name: Industry SIC Code
+      aliases: [SIC Code, "Industry / SIC Code", Industry Code]
+      required: false
+      type: string
+
+    - name: Policy Effective Date
+      aliases: [Policy Effective, Policy Effective Date, Coverage Start Date]
+      required: false
+      type: date
+
+    - name: Policy Expiration Date
+      aliases: [Policy Expiration, Policy Expiration Date, Coverage End Date]
+      required: false
+      type: date
+
+    - name: Broker Name
+      aliases: [Broker, "Broker / Agent Name", Agent Name, Broker Name]
+      required: false
+      type: string
+
+    - name: Broker Agency
+      aliases: [Broker Agency, Agency Name, "Broker / Agent Agency"]
+      required: false
+      type: string
+
+    - name: Total Building Value
+      aliases: [Building Value, Total Building Value ($), Building Replacement Value]
+      required: false
+      type: currency
+
+    - name: Estimated Building Damage
+      aliases: [Building Damage, Estimated Building Damage ($), Structure Damage]
+      required: false
+      type: currency
+
+    - name: Estimated Contents Damage
+      aliases: [Contents Damage, Estimated Contents Damage ($), Personal Property Damage]
+      required: false
+      type: currency
+
+    - name: Business Interruption Coverage
+      aliases: [BI Coverage, "Business Interruption Coverage?", "BI Coverage Claimed?"]
+      required: false
+      type: boolean
+
+    - name: Date Operations Suspended
+      aliases: [Operations Suspended, Date Operations Suspended, Shutdown Date]
+      required: false
+      type: date
+
+    - name: Expected Resumption Date
+      aliases: [Resumption Date, Expected Resumption Date, Restart Date]
+      required: false
+      type: date
+
+    - name: Annual Gross Revenue
+      aliases: [Annual Revenue, Annual Gross Revenue ($), Gross Revenue]
+      required: false
+      type: currency
+
+    - name: Reserve Set
+      aliases: [Reserve, Reserve Set ($), Claim Reserve]
+      required: false
+      type: currency
+
+    - name: Mitigation Contractor
+      aliases: [Mitigation Contractor, Mitigation Contractor Name, Emergency Contractor]
+      required: false
+      type: string
+
+    - name: Third Party Claim Anticipated
+      aliases: ["Third-Party Claim Anticipated?", Third Party Claim, Third-Party Anticipated]
+      required: false
+      type: boolean
+
+# ── Type-specific assessment fields (always extracted for Signals tab) ─────────
+type_specific:
+  - name: Severity
+    description: Overall claim severity level (Low / Moderate / High / Highly Severe)
+
+  - name: Litigation Risk
+    description: Likelihood of litigation or legal escalation
+
+  - name: Fraud Indicator
+    description: Any indicators suggestive of potential fraud
+
+  - name: Coverage Concern
+    description: Any noted coverage gaps, exclusions, or reservation-of-rights triggers
+
+  - name: Estimated Loss Amount
+    description: Best estimate of total insured loss
+
+  - name: Recommended Next Step
+    description: Immediate recommended action for the claims handler
+
+# ── Signal detection taxonomy ─────────────────────────────────────────────────
+signals:
+  types:
+    - severity
+    - legal_escalation
+    - fraud_indicator
+    - coverage_issue
+  severity_triggers:
+    highly_severe:
+      - fatality
+      - death
+      - fatal
+      - catastrophic
+      - total loss
+      - explosion
+      - fire marshal
+      - secondary explosion
+    high:
+      - significant injury
+      - bodily injury
+      - hospitalized
+      - major damage
+      - business interruption
+      - large loss
+    moderate:
+      - minor injury
+      - airbag deployed
+      - police report
+      - third party
+    low:
+      - no injuries
+      - minor damage

@@ -113,13 +113,17 @@
         "value": "1200 BAY DR",
         "modified": "1200 BAY DR",
         "excel_row": 42,
-        "excel_col": 2
+        "excel_col": 2,
+        "subrow_inferred": true,
+        "match_detail": "regex: street-number + name pattern (e.g. '391 MAIN ST', 'PO BOX …')"
       },
       "Cause of Loss": {
         "value": "Water damage",
         "modified": "Water damage",
         "excel_row": 42,
-        "excel_col": 4
+        "excel_col": 4,
+        "subrow_inferred": true,
+        "match_detail": "regex: peril keyword matched - \"Water damage\""
       }
     },
     "Closed": {
@@ -235,13 +239,17 @@
         "value": "2117 2ND AVE",
         "modified": "2117 2ND AVE",
         "excel_row": 39,
-        "excel_col": 2
+        "excel_col": 2,
+        "subrow_inferred": true,
+        "match_detail": "regex: street-number + name pattern (e.g. '391 MAIN ST', 'PO BOX …')"
       },
       "Cause of Loss": {
         "value": "Fire occurred in bldg",
         "modified": "Fire occurred in bldg",
         "excel_row": 39,
-        "excel_col": 4
+        "excel_col": 4,
+        "subrow_inferred": true,
+        "match_detail": "regex: peril keyword matched - \"Fire\""
       }
     }
   },

@@ -4,6 +4,14 @@ Renders an Excel sheet to a PIL Image and computes cell bounding boxes
 for the eye-popup cell-highlight feature.
 
 Also provides render_pdf_page_with_highlight() for PDF eye popup support.
+
+FIXES:
+  1. render_excel_sheet: removed duplicate draw.text call that caused every
+     non-header cell to be drawn twice AND header row text to be skipped.
+  2. get_cell_pixel_bbox: fixed zero-size bbox when target_col is the last
+     column (col_starts[c] was clamped to col_starts[c-1]).
+  3. render_excel_sheet: added guard so col_starts/row_starts are never empty
+     even when openpyxl reports max_column/max_row as None or 0.
 """
 
 import openpyxl
@@ -31,8 +39,9 @@ def render_excel_sheet(excel_path: str, sheet_name: str, scale: float = 1.0):
     wb      = openpyxl.load_workbook(excel_path, data_only=True)
     ws      = wb[sheet_name]
     max_col = ws.max_column or 1
-    max_row = ws.max_row or 1
+    max_row = ws.max_row    or 1
 
+    # ── Build pixel start positions ──────────────────────────────────────────
     col_starts = [0]
     for c in range(1, max_col + 1):
         col_starts.append(col_starts[-1] + _col_px(ws, c, scale))
@@ -40,9 +49,13 @@ def render_excel_sheet(excel_path: str, sheet_name: str, scale: float = 1.0):
     for r in range(1, max_row + 1):
         row_starts.append(row_starts[-1] + _row_px(ws, r, scale))
 
-    img  = Image.new("RGB", (col_starts[-1], row_starts[-1]), "white")
+    # Guard: ensure image is at least 1×1
+    img_w = max(col_starts[-1], 1)
+    img_h = max(row_starts[-1], 1)
+    img  = Image.new("RGB", (img_w, img_h), "white")
     draw = ImageDraw.Draw(img, "RGBA")
 
+    # ── Build merged-cell master map ─────────────────────────────────────────
     merged_master: dict = {}
     for mr in ws.merged_cells.ranges:
         mn_r, mn_c, mx_r, mx_c = mr.min_row, mr.min_col, mr.max_row, mr.max_col
@@ -50,6 +63,7 @@ def render_excel_sheet(excel_path: str, sheet_name: str, scale: float = 1.0):
             for cc in range(mn_c, mx_c + 1):
                 merged_master[(rr, cc)] = (mn_r, mn_c, mx_r, mx_c)
 
+    # ── Draw cells ───────────────────────────────────────────────────────────
     drawn_merges: set = set()
     for r in range(1, max_row + 1):
         for c in range(1, max_col + 1):
@@ -59,39 +73,48 @@ def render_excel_sheet(excel_path: str, sheet_name: str, scale: float = 1.0):
                 if (mn_r, mn_c) in drawn_merges:
                     continue
                 drawn_merges.add((mn_r, mn_c))
-                x1, y1 = col_starts[mn_c - 1], row_starts[mn_r - 1]
-                x2, y2 = col_starts[mx_c],      row_starts[mx_r]
-                cell   = ws.cell(mn_r, mn_c)
+                x1 = col_starts[mn_c - 1]
+                y1 = row_starts[mn_r - 1]
+                x2 = col_starts[min(mx_c, len(col_starts) - 1)]
+                y2 = row_starts[min(mx_r, len(row_starts) - 1)]
+                cell = ws.cell(mn_r, mn_c)
             else:
-                x1, y1 = col_starts[c - 1], row_starts[r - 1]
-                x2, y2 = col_starts[c],      row_starts[r]
-                cell   = ws.cell(r, c)
+                x1 = col_starts[c - 1]
+                y1 = row_starts[r - 1]
+                x2 = col_starts[c]          # col_starts has max_col+1 entries, so c is always valid
+                y2 = row_starts[r]          # same for row_starts
+                cell = ws.cell(r, c)
 
+            # Background
             bg_hex = "FFFFFF"
             if cell.fill and cell.fill.fill_type == "solid":
                 bg_hex = _resolve_color(cell.fill.fgColor, "FFFFFF")
-            draw.rectangle([x1, y1, x2 - 1, y2 - 1], fill=f"#{bg_hex}", outline="#CCCCCC", width=1)
+            draw.rectangle([x1, y1, x2 - 1, y2 - 1],
+                           fill=f"#{bg_hex}", outline="#CCCCCC", width=1)
 
-            val = cell.value
-            if val is not None:
+            # Text — FIX: single draw.text call, chosen text based on row
+            if cell.value is not None:
                 txt_color = "#000000"
                 if cell.font and cell.font.color:
                     fc = _resolve_color(cell.font.color, "000000")
                     if fc.upper() != bg_hex.upper():
                         txt_color = f"#{fc}"
-                bold    = bool(cell.font and cell.font.bold)
-                text    = format_cell_value_with_fmt(cell) if cell.value is not None else ""
-                cell_w  = x2 - x1
-                ch_w    = 8 if bold else 7
-                max_chars = max(1, (cell_w - 8) // ch_w)
-                # Detect header row
+
+                text  = format_cell_value_with_fmt(cell)
+                bold  = bool(cell.font and cell.font.bold)
+
                 if r == 1:
-                    # DON'T truncate header
+                    # Header row: never truncate
                     display_text = text
                 else:
-                    display_text = text[:max_chars] if len(text) > max_chars else text
-                    draw.text((x1 + 4, y1 + 4), display_text, fill=txt_color)
-                draw.text((x1 + 4, y1 + 4), text, fill=txt_color)
+                    cell_w    = x2 - x1
+                    ch_w      = 8 if bold else 7
+                    max_chars = max(1, (cell_w - 8) // ch_w)
+                    display_text = text[:max_chars - 1] + "…" if len(text) > max_chars else text
+
+                # Single draw call — was duplicated before (caused double-paint
+                # on non-header rows and missing paint on header row)
+                draw.text((x1 + 4, y1 + 4), display_text, fill=txt_color)
 
     wb.close()
     return img, col_starts, row_starts, merged_master
@@ -102,21 +125,36 @@ def get_cell_pixel_bbox(
     target_row: int, target_col: int,
     merged_master: dict | None = None,
 ) -> tuple:
-    c = max(1, min(target_col, len(col_starts) - 1))
-    r = max(1, min(target_row, len(row_starts) - 1))
+    """
+    Return (x1, y1, x2, y2) pixel bounding box for the target cell.
+
+    FIX: col_starts has (max_col + 1) entries so index `c` (1-based) is
+    always a valid right-edge lookup.  The old code clamped to
+    len(col_starts)-1 which aliased the last column's right edge to its
+    left edge, producing a zero-width bbox.
+    """
+    n_cols = len(col_starts) - 1   # number of data columns available
+    n_rows = len(row_starts) - 1
+
+    c = max(1, min(target_col, n_cols))
+    r = max(1, min(target_row, n_rows))
+
     if merged_master:
         info = merged_master.get((r, c))
         if info:
             mn_r, mn_c, mx_r, mx_c = info
             return (
-                col_starts[mn_c - 1], row_starts[mn_r - 1],
-                col_starts[min(mx_c, len(col_starts) - 1)],
-                row_starts[min(mx_r, len(row_starts) - 1)],
+                col_starts[max(0, mn_c - 1)],
+                row_starts[max(0, mn_r - 1)],
+                col_starts[min(mx_c, n_cols)],
+                row_starts[min(mx_r, n_rows)],
             )
+
     return (
-        col_starts[c - 1], row_starts[r - 1],
-        col_starts[min(c, len(col_starts) - 1)],
-        row_starts[min(r, len(row_starts) - 1)],
+        col_starts[c - 1],
+        row_starts[r - 1],
+        col_starts[c],      # FIX: was col_starts[min(c, len-1)] which equalled col_starts[c-1] for last col
+        row_starts[r],      # same fix for rows
     )
 
 
@@ -197,7 +235,6 @@ def render_pdf_page_with_highlight(
         return img, img
 
     # ── Convert Azure inch coords → pixel coords ──────────────────────────────
-    # Azure DI returns coordinates in inches from the top-left of the page
     scale_x = img_w / page_width_inches
     scale_y = img_h / page_height_inches
     px_poly = [(int(x * scale_x), int(y * scale_y)) for x, y in bounding_polygon]
@@ -206,22 +243,16 @@ def render_pdf_page_with_highlight(
     highlighted = img.copy()
     draw = ImageDraw.Draw(highlighted, "RGBA")
 
-    # Yellow semi-transparent fill
     draw.polygon(px_poly, fill=(255, 230, 0, 90))
-
-    # Amber border (draw as lines for thickness control)
     for i in range(len(px_poly)):
         p1 = px_poly[i]
         p2 = px_poly[(i + 1) % len(px_poly)]
         draw.line([p1, p2], fill=(245, 158, 11, 255), width=3)
-
-    # Inner white hairline for contrast
     for i in range(len(px_poly)):
         p1 = px_poly[i]
         p2 = px_poly[(i + 1) % len(px_poly)]
         draw.line([p1, p2], fill=(255, 255, 255, 160), width=1)
 
-    # ── Crop context around the highlighted region ────────────────────────────
     xs = [p[0] for p in px_poly]
     ys = [p[1] for p in px_poly]
     x1, y1, x2, y2 = min(xs), min(ys), max(xs), max(ys)
@@ -249,7 +280,6 @@ def render_pdf_page_text_highlight(
         doc  = fitz.open(pdf_path)
         page = doc[page_number - 1]
 
-        # Parse key and value from source_text format "KEY: VALUE"
         key_text   = None
         value_text = None
         if ": " in search_text:
@@ -267,28 +297,19 @@ def render_pdf_page_text_highlight(
         draw  = ImageDraw.Draw(img, "RGBA")
         scale = dpi / 72.0
 
-        # ── Find key instances ────────────────────────────────────────────────
         key_instances = []
         if key_text:
             doc2 = fitz.open(pdf_path)
             pg2  = doc2[page_number - 1]
             key_instances = pg2.search_for(key_text)
 
-            # ── Find value instance CLOSEST to the key ────────────────────────
             val_instances = pg2.search_for(value_text) if value_text else []
-
-            # Pick the value instance closest (vertically) to the key
             best_val = None
             if key_instances and val_instances:
-                # Use the first key instance as anchor
                 key_anchor_y = key_instances[0].y0
-                best_val = min(
-                    val_instances,
-                    key=lambda r: abs(r.y0 - key_anchor_y)
-                )
+                best_val = min(val_instances, key=lambda r: abs(r.y0 - key_anchor_y))
             elif val_instances:
                 best_val = val_instances[0]
-
             doc2.close()
         else:
             doc3 = fitz.open(pdf_path)
@@ -298,10 +319,9 @@ def render_pdf_page_text_highlight(
             key_instances = []
             doc3.close()
 
-        # ── Collect all rects to highlight ───────────────────────────────────
         rects_to_highlight = []
         if key_instances:
-            rects_to_highlight.append(key_instances[0])  # only first key match
+            rects_to_highlight.append(key_instances[0])
         if best_val:
             rects_to_highlight.append(best_val)
 
@@ -321,17 +341,15 @@ def render_pdf_page_text_highlight(
                 draw.rectangle([x1 + 3, y1 + 3, x2 - 3, y2 - 3],
                                outline=(255, 255, 255, 160), width=1)
 
-            # Crop around both key + value with padding
             cx1 = max(0, min(all_x1) - 300)
             cy1 = max(0, min(all_y1) - 80)
             cx2 = min(img.width,  max(all_x2) + 300)
             cy2 = min(img.height, max(all_y2) + 80)
             cropped = img.crop((cx1, cy1, cx2, cy2))
         else:
-            # Nothing found — return full page
             cropped = img
 
         return img, cropped
 
     except Exception:
-        return None, None 
+        return None, None

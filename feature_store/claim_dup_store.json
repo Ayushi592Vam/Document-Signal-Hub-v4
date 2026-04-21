@@ -3,7 +3,7 @@
     "claim_id": "1285937",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.309850",
+    "ingested_at": "2026-04-21T17:57:23.248862",
     "fields": {
       "Claim Number": "1285937",
       "Insured Name": "BLR HOLDINGS",
@@ -31,7 +31,7 @@
     "claim_id": "1287362",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.309910",
+    "ingested_at": "2026-04-21T17:57:23.248923",
     "fields": {
       "Claim Number": "1287362",
       "Insured Name": "DURHAM AND SONS",
@@ -59,7 +59,7 @@
     "claim_id": "1284162",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.309948",
+    "ingested_at": "2026-04-21T17:57:23.248962",
     "fields": {
       "Claim Number": "1284162",
       "Insured Name": "AENIEL PROPERTIES",
@@ -87,7 +87,7 @@
     "claim_id": "1284167",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.309983",
+    "ingested_at": "2026-04-21T17:57:23.248998",
     "fields": {
       "Claim Number": "1284167",
       "Insured Name": "WEST PORT MGMT",
@@ -108,14 +108,14 @@
       "OUTSTANDING TPA": "0.00",
       "CURRENT RECOVERIES": "0.00",
       "Address": "PO BOX 4400",
-      "Cause of Loss": "All roofs at complex"
+      "SubRow_D": "All roofs at complex"
     }
   },
   "1284163": {
     "claim_id": "1284163",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.310013",
+    "ingested_at": "2026-04-21T17:57:23.249026",
     "fields": {
       "Claim Number": "1284163",
       "Insured Name": "ERDOREY KEY LLC",
@@ -136,14 +136,14 @@
       "OUTSTANDING TPA": "0.00",
       "CURRENT RECOVERIES": "0.00",
       "Address": "27200 PERDIDO",
-      "Cause of Loss": "Lost revenue claim"
+      "SubRow_D": "Lost revenue claim"
     }
   },
   "1244170": {
     "claim_id": "1244170",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.310043",
+    "ingested_at": "2026-04-21T17:57:23.249051",
     "fields": {
       "Claim Number": "1244170",
       "Insured Name": "WELLINGTON PARTNERS",
@@ -171,7 +171,7 @@
     "claim_id": "1244180",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.310069",
+    "ingested_at": "2026-04-21T18:08:06.727417",
     "fields": {
       "Claim Number": "1244180",
       "Insured Name": "WELLINGTON PARTNERS",
@@ -182,12 +182,12 @@
       "LOSS PAID THIS MONTH": "0.00",
       "Total Paid": "7339700.00",
       "ADJUSTING COSTS": "0.00",
-      "Reserve": "693120.00",
+      "Expense Paid": "693120.00",
       "TPA COST": "0.00",
-      "Expense Paid": "153170.00",
+      "Medical Paid": "153170.00",
       "DEFENSE COSTS": "0.00",
       "DEFENSE COSTS_2": "0.00",
-      "OUTSTANDING LOSS": "0.00",
+      "Reserve": "0.00",
       "OUTSTANDING FEE": "0.00",
       "OUTSTANDING TPA": "0.00",
       "CURRENT RECOVERIES": "0.00",
@@ -199,7 +199,7 @@
     "claim_id": "1244189",
     "sheet_name": "Loss Detail 2025",
     "filename": "messy sample.xlsx",
-    "ingested_at": "2026-04-21T14:30:49.310118",
+    "ingested_at": "2026-04-21T18:08:06.494259",
     "fields": {
       "Claim Number": "1244189",
       "Insured Name": "HOLLYWOOD ESTATES",
@@ -210,17 +210,245 @@
       "LOSS PAID THIS MONTH": "0.00",
       "Total Paid": "3527950.00",
       "ADJUSTING COSTS": "0.00",
-      "Reserve": "340720.00",
+      "Expense Paid": "340720.00",
       "TPA COST": "0.00",
-      "Expense Paid": "321560.00",
+      "Medical Paid": "321560.00",
       "DEFENSE COSTS": "0.00",
       "DEFENSE COSTS_2": "0.00",
-      "OUTSTANDING LOSS": "450000.00",
+      "Reserve": "450000.00",
       "OUTSTANDING FEE": "25000.00",
       "OUTSTANDING TPA": "15000.00",
       "CURRENT RECOVERIES": "0.00",
       "Address": "1200 BAY DR",
       "Cause of Loss": "Water damage"
+    }
+  },
+  "CA-001": {
+    "claim_id": "CA-001",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:42.812938",
+    "fields": {
+      "Claim #": "CA-001",
+      "Loss Date": "03-08-2021 00:00",
+      "Date Reported": "04-08-2021 00:00",
+      "Claimant Name": "Marcus Hill",
+      "Vehicle ID": "TRK-14",
+      "At Fault": "Yes",
+      "BI Paid": "0",
+      "PD Paid": "4200",
+      "Medical Paid": "0",
+      "Total Paid": "4200",
+      "Reserve": "0",
+      "Status": "CLOSED"
+    }
+  },
+  "CA-002": {
+    "claim_id": "CA-002",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:43.102387",
+    "fields": {
+      "Claim #": "CA-002",
+      "Loss Date": "19-10-2021 00:00",
+      "Date Reported": "20-10-2021 00:00",
+      "Claimant Name": "Tanya Brooks",
+      "Vehicle ID": "VAN-07",
+      "Cause of Loss": "Side-swipe",
+      "At Fault": "No",
+      "BI Paid": "0",
+      "PD Paid": "1800",
+      "Medical Paid": "0",
+      "Total Paid": "1800",
+      "Reserve": "0",
+      "Status": "CLOSED"
+    }
+  },
+  "CA-003": {
+    "claim_id": "CA-003",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:43.356301",
+    "fields": {
+      "Claim #": "CA-003",
+      "Loss Date": "28-01-2022 00:00",
+      "Date Reported": "30-01-2022 00:00",
+      "Claimant Name": "Samuel Grant",
+      "Vehicle ID": "TRK-22",
+      "Cause of Loss": "Intersection collision",
+      "At Fault": "Yes",
+      "BI Paid": "35000",
+      "PD Paid": "12000",
+      "Medical Paid": "18500",
+      "Total Paid": "65500",
+      "Reserve": "45000",
+      "Status": "OPEN"
+    }
+  },
+  "CA-004": {
+    "claim_id": "CA-004",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:43.694110",
+    "fields": {
+      "Claim #": "CA-004",
+      "Loss Date": "11-04-2022 00:00",
+      "Date Reported": "12-04-2022 00:00",
+      "Claimant Name": "Priya Singh",
+      "Vehicle ID": "SED-03",
+      "Cause of Loss": "Parking lot",
+      "At Fault": "Yes",
+      "BI Paid": "0",
+      "PD Paid": "850",
+      "Medical Paid": "0",
+      "Total Paid": "850",
+      "Reserve": "0",
+      "Status": "CLOSED"
+    }
+  },
+  "CA-005": {
+    "claim_id": "CA-005",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:44.021995",
+    "fields": {
+      "Claim #": "CA-005",
+      "Loss Date": "07-07-2022 00:00",
+      "Date Reported": "08-07-2022 00:00",
+      "Claimant Name": "Larry Dunne",
+      "Vehicle ID": "TRK-08",
+      "Cause of Loss": "Rollover",
+      "At Fault": "Yes",
+      "BI Paid": "0",
+      "PD Paid": "62000",
+      "Medical Paid": "0",
+      "Total Paid": "62000",
+      "Reserve": "0",
+      "Status": "CLOSED"
+    }
+  },
+  "CA-006": {
+    "claim_id": "CA-006",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:44.272478",
+    "fields": {
+      "Claim #": "CA-006",
+      "Loss Date": "15-11-2022 00:00",
+      "Date Reported": "17-11-2022 00:00",
+      "Claimant Name": "Carla Dixon",
+      "Vehicle ID": "VAN-12",
+      "Cause of Loss": "Pedestrian injury",
+      "At Fault": "Yes",
+      "BI Paid": "0",
+      "PD Paid": "2100",
+      "Medical Paid": "9800",
+      "Total Paid": "11900",
+      "Reserve": "65000",
+      "Status": "OPEN"
+    }
+  },
+  "CA-007": {
+    "claim_id": "CA-007",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:44.515178",
+    "fields": {
+      "Claim #": "CA-007",
+      "Loss Date": "22-02-2023 00:00",
+      "Date Reported": "24-02-2023 00:00",
+      "Claimant Name": "Brian Yates",
+      "Vehicle ID": "TRK-31",
+      "BI Paid": "0",
+      "PD Paid": "3400",
+      "Medical Paid": "0",
+      "Total Paid": "3400",
+      "Reserve": "0",
+      "Status": "CLOSED"
+    }
+  },
+  "CA-008": {
+    "claim_id": "CA-008",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:44.768583",
+    "fields": {
+      "Claim #": "CA-008",
+      "Loss Date": "16-05-2023 00:00",
+      "Date Reported": "18-05-2023 00:00",
+      "Claimant Name": "Monica Perez",
+      "Vehicle ID": "SED-09",
+      "Cause of Loss": "Rear-end collision",
+      "At Fault": "Yes",
+      "BI Paid": "8500",
+      "PD Paid": "3200",
+      "Medical Paid": "4100",
+      "Total Paid": "15800",
+      "Reserve": "0",
+      "Status": "CLOSED"
+    }
+  },
+  "CA-009": {
+    "claim_id": "CA-009",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:45.028030",
+    "fields": {
+      "Claim #": "CA-009",
+      "Loss Date": "04-09-2023 00:00",
+      "Date Reported": "05-09-2023 00:00",
+      "Claimant Name": "Derek Nash",
+      "Vehicle ID": "TRK-17",
+      "Cause of Loss": "Head-on collision",
+      "At Fault": "Yes",
+      "BI Paid": "0",
+      "PD Paid": "8900",
+      "Medical Paid": "14200",
+      "Total Paid": "23100",
+      "Reserve": "95000",
+      "Status": "OPEN"
+    }
+  },
+  "CA-010": {
+    "claim_id": "CA-010",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:45.427100",
+    "fields": {
+      "Claim #": "CA-010",
+      "Loss Date": "30-01-2024 00:00",
+      "Date Reported": "01-02-2024 00:00",
+      "Claimant Name": "Shonda Lewis",
+      "Vehicle ID": "VAN-02",
+      "Cause of Loss": "Weather - ice",
+      "At Fault": "No",
+      "BI Paid": "0",
+      "PD Paid": "5600",
+      "Medical Paid": "0",
+      "Total Paid": "5600",
+      "Reserve": "0",
+      "Status": "CLOSED"
+    }
+  },
+  "CA-011": {
+    "claim_id": "CA-011",
+    "sheet_name": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "ingested_at": "2026-04-21T18:02:45.653791",
+    "fields": {
+      "Claim #": "CA-011",
+      "Loss Date": "12-03-2024 00:00",
+      "Date Reported": "13-03-2024 00:00",
+      "Claimant Name": "Victor Okafor",
+      "Vehicle ID": "TRK-05",
+      "Cause of Loss": "Backing accident",
+      "At Fault": "Yes",
+      "BI Paid": "0",
+      "PD Paid": "1200",
+      "Medical Paid": "0",
+      "Total Paid": "1200",
+      "Reserve": "0",
+      "Status": "CLOSED"
     }
   }
 }

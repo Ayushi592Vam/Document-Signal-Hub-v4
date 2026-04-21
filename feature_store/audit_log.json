@@ -25883,5 +25883,571 @@
     "filename": "FNOL_Auto_Vehicle_Filled.pdf",
     "sheet": "Page 1",
     "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a"
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T17:43:54.660100",
+    "filename": "loss_runs.xlsx",
+    "file_hash": "47f14b302b83b7b7409833a0f72996f8757168d2d40475bb984467f1bcbb09cd",
+    "sheets": [
+      "CGL Loss Run",
+      "Workers Comp Loss Run",
+      "Commercial Auto Loss Run",
+      "Commercial Property Loss Run",
+      "Prof Liability E&O Loss Run"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T17:43:56.118737",
+    "filename": "loss_runs.xlsx",
+    "sheet": "CGL Loss Run",
+    "sheet_hash": "0a53856501ec2c42f484328b7be87569ac8f90d6df3ccd7b9db90d0ad70c24de",
+    "claim_rows": 10,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 14,
+    "total_cols": 12,
+    "col_renames": {
+      "Claim_id": "Claim Number",
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Claimant Name": "Claimant Name",
+      "Description of Loss": "Description of Loss",
+      "Indemnity Paid": "Indemnity Paid",
+      "Medical Paid": "Medical Paid",
+      "Expense Paid": "Expense Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Total Incurred": "Total Incurred",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "LLM_CAUSE_ENRICHED",
+    "timestamp": "2026-04-21T17:43:58.901808",
+    "sheet": "CGL Loss Run",
+    "claim_id": "CGL-001",
+    "source_fields": [
+      "Description of Loss"
+    ],
+    "input_text": "LACERATION",
+    "cause_of_loss": "Laceration",
+    "summary": "The claimant alleges that they suffered a laceration."
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T17:44:29.771499",
+    "filename": "messy sample.xlsx",
+    "file_hash": "cccf70c0dfe1396bae5bb61c8717a9818d9c4e4062962690ad3b28b7ce525acd",
+    "sheets": [
+      "Loss Detail 2025",
+      "Loss Detail 2024",
+      "Loss Detail 2023",
+      "Loss Detail 2022"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T17:44:30.238762",
+    "filename": "messy sample.xlsx",
+    "sheet": "Loss Detail 2025",
+    "sheet_hash": "b517575b4ae79315121e0f3a3fdd2b80b6c1c7338353ee44f70af5e89159f4c6",
+    "claim_rows": 8,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 46,
+    "total_cols": 18,
+    "col_renames": {
+      "STATUS": "Status",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "LLM_FIELD_MAP",
+    "timestamp": "2026-04-21T17:44:34.867307",
+    "sheet": "Loss Detail 2025",
+    "schema": "Guidewire",
+    "source_cols": [
+      "FILE NUM",
+      "NAME OF ASSURED",
+      "POL NUM",
+      "DOL",
+      "Status",
+      "HOME",
+      "LOSS PAID THIS MONTH",
+      "LOSS PAID TO DATE",
+      "ADJUSTING COSTS",
+      "ADJUSTING COSTS_2",
+      "TPA COST",
+      "TPA COSTS",
+      "DEFENSE COSTS",
+      "DEFENSE COSTS_2",
+      "OUTSTANDING LOSS",
+      "OUTSTANDING FEE",
+      "OUTSTANDING TPA",
+      "CURRENT RECOVERIES",
+      "Address",
+      "Cause of Loss"
+    ],
+    "mappings": {
+      "FILE NUM": "Claim Number",
+      "NAME OF ASSURED": "Insured Name",
+      "POL NUM": "Policy Number",
+      "DOL": "Loss Date",
+      "Status": "Status",
+      "LOSS PAID TO DATE": "Total Paid",
+      "ADJUSTING COSTS_2": "Reserve",
+      "TPA COSTS": "Expense Paid",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T17:57:15.515176",
+    "filename": "messy sample.xlsx",
+    "file_hash": "cccf70c0dfe1396bae5bb61c8717a9818d9c4e4062962690ad3b28b7ce525acd",
+    "sheets": [
+      "Loss Detail 2025",
+      "Loss Detail 2024",
+      "Loss Detail 2023",
+      "Loss Detail 2022"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T17:57:16.177672",
+    "filename": "messy sample.xlsx",
+    "sheet": "Loss Detail 2025",
+    "sheet_hash": "b517575b4ae79315121e0f3a3fdd2b80b6c1c7338353ee44f70af5e89159f4c6",
+    "claim_rows": 8,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 46,
+    "total_cols": 18,
+    "col_renames": {
+      "STATUS": "Status",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "LLM_FIELD_MAP",
+    "timestamp": "2026-04-21T17:57:22.919351",
+    "sheet": "Loss Detail 2025",
+    "schema": "Guidewire",
+    "source_cols": [
+      "FILE NUM",
+      "NAME OF ASSURED",
+      "POL NUM",
+      "DOL",
+      "Status",
+      "HOME",
+      "LOSS PAID THIS MONTH",
+      "LOSS PAID TO DATE",
+      "ADJUSTING COSTS",
+      "ADJUSTING COSTS_2",
+      "TPA COST",
+      "TPA COSTS",
+      "DEFENSE COSTS",
+      "DEFENSE COSTS_2",
+      "OUTSTANDING LOSS",
+      "OUTSTANDING FEE",
+      "OUTSTANDING TPA",
+      "CURRENT RECOVERIES",
+      "Address",
+      "Cause of Loss"
+    ],
+    "mappings": {
+      "FILE NUM": "Claim Number",
+      "NAME OF ASSURED": "Insured Name",
+      "POL NUM": "Policy Number",
+      "DOL": "Loss Date",
+      "Status": "Status",
+      "LOSS PAID TO DATE": "Total Paid",
+      "ADJUSTING COSTS_2": "Reserve",
+      "TPA COSTS": "Expense Paid",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T18:01:09.738103",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "file_hash": "0f727bf3b03d7fc3bd4a1eae62a70fc7ad39a6fad2ce73112a7a28b50ac22713",
+    "sheets": [
+      "Sheet1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T18:01:10.111867",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "cd1bc029dab786dd3d1f3526bdc8aa539903a41a452667d5d5fa0fa580a02e4a",
+    "claim_rows": 11,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 15,
+    "total_cols": 13,
+    "col_renames": {
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Driver Name": "Claimant Name",
+      "Vehicle ID": "Vehicle ID",
+      "Type of Loss": "Cause of Loss",
+      "At Fault": "At Fault",
+      "Medical Paid": "Medical Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T18:02:42.062560",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "file_hash": "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101",
+    "sheets": [
+      "Sheet1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T18:02:42.493449",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165",
+    "claim_rows": 11,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 15,
+    "total_cols": 13,
+    "col_renames": {
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Driver Name": "Claimant Name",
+      "Vehicle ID": "Vehicle ID",
+      "Type of Loss": "Cause of Loss",
+      "At Fault": "At Fault",
+      "Medical Paid": "Medical Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:42.813070",
+    "claim_id": "CA-001",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": [
+      "Cause of Loss"
+    ]
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:43.102615",
+    "claim_id": "CA-002",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:43.356441",
+    "claim_id": "CA-003",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:43.694250",
+    "claim_id": "CA-004",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:44.022136",
+    "claim_id": "CA-005",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:44.272629",
+    "claim_id": "CA-006",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:44.515269",
+    "claim_id": "CA-007",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:44.768711",
+    "claim_id": "CA-008",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:45.028183",
+    "claim_id": "CA-009",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:45.427212",
+    "claim_id": "CA-010",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:02:45.653899",
+    "claim_id": "CA-011",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "LLM_CAUSE_ENRICHED",
+    "timestamp": "2026-04-21T18:02:47.593357",
+    "sheet": "Sheet1",
+    "claim_id": "CA-001",
+    "source_fields": [
+      "Loss Date"
+    ],
+    "input_text": "03-08-2021 00:00",
+    "cause_of_loss": "Other",
+    "summary": "The claimant alleges that an incident occurred on March 8, 2021."
+  },
+  {
+    "event": "SHEET_LOADED_FROM_CACHE",
+    "timestamp": "2026-04-21T18:08:01.690307",
+    "filename": "messy sample.xlsx",
+    "sheet": "Loss Detail 2025",
+    "sheet_hash": "b517575b4ae79315121e0f3a3fdd2b80b6c1c7338353ee44f70af5e89159f4c6"
+  },
+  {
+    "event": "LLM_FIELD_MAP",
+    "timestamp": "2026-04-21T18:08:06.244500",
+    "sheet": "Loss Detail 2025",
+    "schema": "Guidewire",
+    "source_cols": [
+      "FILE NUM",
+      "NAME OF ASSURED",
+      "POL NUM",
+      "DOL",
+      "Status",
+      "HOME",
+      "LOSS PAID THIS MONTH",
+      "LOSS PAID TO DATE",
+      "ADJUSTING COSTS",
+      "ADJUSTING COSTS_2",
+      "TPA COST",
+      "TPA COSTS",
+      "DEFENSE COSTS",
+      "DEFENSE COSTS_2",
+      "OUTSTANDING LOSS",
+      "OUTSTANDING FEE",
+      "OUTSTANDING TPA",
+      "CURRENT RECOVERIES",
+      "Address",
+      "Cause of Loss"
+    ],
+    "mappings": {
+      "FILE NUM": "Claim Number",
+      "NAME OF ASSURED": "Insured Name",
+      "POL NUM": "Policy Number",
+      "DOL": "Loss Date",
+      "Status": "Status",
+      "LOSS PAID TO DATE": "Total Paid",
+      "OUTSTANDING LOSS": "Reserve",
+      "ADJUSTING COSTS_2": "Expense Paid",
+      "TPA COSTS": "Medical Paid",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:08:06.494381",
+    "claim_id": "1244189",
+    "sheet": "Loss Detail 2025",
+    "filename": "messy sample.xlsx",
+    "prev_filename": "messy sample.xlsx",
+    "changed_fields": [
+      "Expense Paid",
+      "Medical Paid",
+      "OUTSTANDING LOSS",
+      "Reserve"
+    ]
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T18:08:06.727546",
+    "claim_id": "1244180",
+    "sheet": "Loss Detail 2025",
+    "filename": "messy sample.xlsx",
+    "prev_filename": "messy sample.xlsx",
+    "changed_fields": [
+      "Expense Paid",
+      "Medical Paid",
+      "OUTSTANDING LOSS",
+      "Reserve"
+    ]
+  },
+  {
+    "event": "LLM_FIELD_MAP",
+    "timestamp": "2026-04-21T18:08:10.851134",
+    "sheet": "Loss Detail 2025_plain",
+    "schema": "Guidewire",
+    "source_cols": [
+      "Claim Number",
+      "Insured Name",
+      "Policy Number",
+      "Loss Date",
+      "Status",
+      "HOME",
+      "LOSS PAID THIS MONTH",
+      "Total Paid",
+      "ADJUSTING COSTS",
+      "Expense Paid",
+      "TPA COST",
+      "Medical Paid",
+      "DEFENSE COSTS",
+      "DEFENSE COSTS_2",
+      "Reserve",
+      "OUTSTANDING FEE",
+      "OUTSTANDING TPA",
+      "CURRENT RECOVERIES",
+      "Address",
+      "Cause of Loss"
+    ],
+    "mappings": {
+      "Claim Number": "Claim Number",
+      "Insured Name": "Insured Name",
+      "Policy Number": "Policy Number",
+      "Loss Date": "Loss Date",
+      "Status": "Status",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Expense Paid": "Expense Paid",
+      "Medical Paid": "Medical Paid",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T18:11:17.238157",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "file_hash": "9ec4cb74aad9339f143b3b2c13d74ddd7aa22eac44c29b41c320e7c28b1c9d7b",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T18:12:29.350940",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 11,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T18:19:52.271361",
+    "filename": "Legal_Sample.pdf",
+    "file_hash": "890569c832e58254f08742bcae988b0e7160de87e87d54410c658d0744cce68d",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T18:20:55.543577",
+    "filename": "Legal_Sample.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 10,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T18:24:05.574089",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "file_hash": "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T18:25:02.870734",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 5,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T18:53:28.501762",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T18:54:33.548485",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
   }
 ]

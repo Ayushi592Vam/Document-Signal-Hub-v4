@@ -1,21 +1,7 @@
 {
-  "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4": {
-    "filename": "Legal_Civil_Complaint.pdf",
-    "first_seen": "2026-04-21T14:17:19.636604",
-    "sheet_hashes": {
-      "Page 1": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f"
-    }
-  },
-  "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a": {
-    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
-    "first_seen": "2026-04-21T14:23:26.247246",
-    "sheet_hashes": {
-      "Page 1": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a"
-    }
-  },
   "cccf70c0dfe1396bae5bb61c8717a9818d9c4e4062962690ad3b28b7ce525acd": {
     "filename": "messy sample.xlsx",
-    "first_seen": "2026-04-21T14:30:41.542108",
+    "first_seen": "2026-04-21T17:57:15.482381",
     "sheet_hashes": {
       "Loss Detail 2025": "b517575b4ae79315121e0f3a3fdd2b80b6c1c7338353ee44f70af5e89159f4c6",
       "Loss Detail 2024": "ed815eae0a515bbde1de29e7cdf6474ba434cbbae921ea89902400d46b7a2dc9",
@@ -23,11 +9,46 @@
       "Loss Detail 2022": "5fe5c59f74e8ac7158e74e3c5439ace0a2e2e23856763bf60c6d3a6ea63d47cf"
     }
   },
+  "0f727bf3b03d7fc3bd4a1eae62a70fc7ad39a6fad2ce73112a7a28b50ac22713": {
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "first_seen": "2026-04-21T18:01:09.714592",
+    "sheet_hashes": {
+      "Sheet1": "cd1bc029dab786dd3d1f3526bdc8aa539903a41a452667d5d5fa0fa580a02e4a"
+    }
+  },
+  "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101": {
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "first_seen": "2026-04-21T18:02:41.974865",
+    "sheet_hashes": {
+      "Sheet1": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165"
+    }
+  },
   "9ec4cb74aad9339f143b3b2c13d74ddd7aa22eac44c29b41c320e7c28b1c9d7b": {
     "filename": "Legal_Settlement_Agreement.pdf",
-    "first_seen": "2026-04-21T14:40:19.501886",
+    "first_seen": "2026-04-21T18:11:17.217584",
     "sheet_hashes": {
       "Page 1": "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc"
+    }
+  },
+  "890569c832e58254f08742bcae988b0e7160de87e87d54410c658d0744cce68d": {
+    "filename": "Legal_Sample.pdf",
+    "first_seen": "2026-04-21T18:19:52.248242",
+    "sheet_hashes": {
+      "Page 1": "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071"
+    }
+  },
+  "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4": {
+    "filename": "Legal_Civil_Complaint.pdf",
+    "first_seen": "2026-04-21T18:24:05.538830",
+    "sheet_hashes": {
+      "Page 1": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f"
+    }
+  },
+  "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8": {
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "first_seen": "2026-04-21T18:53:28.484747",
+    "sheet_hashes": {
+      "Page 1": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7"
     }
   }
 }

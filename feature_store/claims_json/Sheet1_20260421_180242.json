@@ -1,0 +1,900 @@
+{
+  "records": {
+    "CA-001": {
+      "Claim #": {
+        "value": "CA-001",
+        "modified": "CA-001",
+        "excel_row": 4,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "03-08-2021 00:00",
+        "modified": "03-08-2021 00:00",
+        "excel_row": 4,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "04-08-2021 00:00",
+        "modified": "04-08-2021 00:00",
+        "excel_row": 4,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Marcus Hill",
+        "modified": "Marcus Hill",
+        "excel_row": 4,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "TRK-14",
+        "modified": "TRK-14",
+        "excel_row": 4,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "",
+        "modified": "",
+        "excel_row": 4,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 4,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 4,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "4200",
+        "modified": "4200",
+        "excel_row": 4,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 4,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "4200",
+        "modified": "4200",
+        "excel_row": 4,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 4,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 4,
+        "excel_col": 13
+      }
+    },
+    "CA-002": {
+      "Claim #": {
+        "value": "CA-002",
+        "modified": "CA-002",
+        "excel_row": 5,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "19-10-2021 00:00",
+        "modified": "19-10-2021 00:00",
+        "excel_row": 5,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "20-10-2021 00:00",
+        "modified": "20-10-2021 00:00",
+        "excel_row": 5,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Tanya Brooks",
+        "modified": "Tanya Brooks",
+        "excel_row": 5,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "VAN-07",
+        "modified": "VAN-07",
+        "excel_row": 5,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Side-swipe",
+        "modified": "Side-swipe",
+        "excel_row": 5,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "No",
+        "modified": "No",
+        "excel_row": 5,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 5,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "1800",
+        "modified": "1800",
+        "excel_row": 5,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 5,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "1800",
+        "modified": "1800",
+        "excel_row": 5,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 5,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 5,
+        "excel_col": 13
+      }
+    },
+    "CA-003": {
+      "Claim #": {
+        "value": "CA-003",
+        "modified": "CA-003",
+        "excel_row": 6,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "28-01-2022 00:00",
+        "modified": "28-01-2022 00:00",
+        "excel_row": 6,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "30-01-2022 00:00",
+        "modified": "30-01-2022 00:00",
+        "excel_row": 6,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Samuel Grant",
+        "modified": "Samuel Grant",
+        "excel_row": 6,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "TRK-22",
+        "modified": "TRK-22",
+        "excel_row": 6,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Intersection collision",
+        "modified": "Intersection collision",
+        "excel_row": 6,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 6,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "35000",
+        "modified": "35000",
+        "excel_row": 6,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "12000",
+        "modified": "12000",
+        "excel_row": 6,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "18500",
+        "modified": "18500",
+        "excel_row": 6,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "65500",
+        "modified": "65500",
+        "excel_row": 6,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "45000",
+        "modified": "45000",
+        "excel_row": 6,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "OPEN",
+        "modified": "OPEN",
+        "excel_row": 6,
+        "excel_col": 13
+      }
+    },
+    "CA-004": {
+      "Claim #": {
+        "value": "CA-004",
+        "modified": "CA-004",
+        "excel_row": 7,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "11-04-2022 00:00",
+        "modified": "11-04-2022 00:00",
+        "excel_row": 7,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "12-04-2022 00:00",
+        "modified": "12-04-2022 00:00",
+        "excel_row": 7,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Priya Singh",
+        "modified": "Priya Singh",
+        "excel_row": 7,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "SED-03",
+        "modified": "SED-03",
+        "excel_row": 7,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Parking lot",
+        "modified": "Parking lot",
+        "excel_row": 7,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 7,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 7,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "850",
+        "modified": "850",
+        "excel_row": 7,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 7,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "850",
+        "modified": "850",
+        "excel_row": 7,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 7,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 7,
+        "excel_col": 13
+      }
+    },
+    "CA-005": {
+      "Claim #": {
+        "value": "CA-005",
+        "modified": "CA-005",
+        "excel_row": 8,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "07-07-2022 00:00",
+        "modified": "07-07-2022 00:00",
+        "excel_row": 8,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "08-07-2022 00:00",
+        "modified": "08-07-2022 00:00",
+        "excel_row": 8,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Larry Dunne",
+        "modified": "Larry Dunne",
+        "excel_row": 8,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "TRK-08",
+        "modified": "TRK-08",
+        "excel_row": 8,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Rollover",
+        "modified": "Rollover",
+        "excel_row": 8,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 8,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 8,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "62000",
+        "modified": "62000",
+        "excel_row": 8,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 8,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "62000",
+        "modified": "62000",
+        "excel_row": 8,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 8,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 8,
+        "excel_col": 13
+      }
+    },
+    "CA-006": {
+      "Claim #": {
+        "value": "CA-006",
+        "modified": "CA-006",
+        "excel_row": 9,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "15-11-2022 00:00",
+        "modified": "15-11-2022 00:00",
+        "excel_row": 9,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "17-11-2022 00:00",
+        "modified": "17-11-2022 00:00",
+        "excel_row": 9,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Carla Dixon",
+        "modified": "Carla Dixon",
+        "excel_row": 9,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "VAN-12",
+        "modified": "VAN-12",
+        "excel_row": 9,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Pedestrian injury",
+        "modified": "Pedestrian injury",
+        "excel_row": 9,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 9,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 9,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "2100",
+        "modified": "2100",
+        "excel_row": 9,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "9800",
+        "modified": "9800",
+        "excel_row": 9,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "11900",
+        "modified": "11900",
+        "excel_row": 9,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "65000",
+        "modified": "65000",
+        "excel_row": 9,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "OPEN",
+        "modified": "OPEN",
+        "excel_row": 9,
+        "excel_col": 13
+      }
+    },
+    "CA-007": {
+      "Claim #": {
+        "value": "CA-007",
+        "modified": "CA-007",
+        "excel_row": 10,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "22-02-2023 00:00",
+        "modified": "22-02-2023 00:00",
+        "excel_row": 10,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "24-02-2023 00:00",
+        "modified": "24-02-2023 00:00",
+        "excel_row": 10,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Brian Yates",
+        "modified": "Brian Yates",
+        "excel_row": 10,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "TRK-31",
+        "modified": "TRK-31",
+        "excel_row": 10,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "",
+        "modified": "",
+        "excel_row": 10,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "",
+        "modified": "",
+        "excel_row": 10,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 10,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "3400",
+        "modified": "3400",
+        "excel_row": 10,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 10,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "3400",
+        "modified": "3400",
+        "excel_row": 10,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 10,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 10,
+        "excel_col": 13
+      }
+    },
+    "CA-008": {
+      "Claim #": {
+        "value": "CA-008",
+        "modified": "CA-008",
+        "excel_row": 11,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "16-05-2023 00:00",
+        "modified": "16-05-2023 00:00",
+        "excel_row": 11,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "18-05-2023 00:00",
+        "modified": "18-05-2023 00:00",
+        "excel_row": 11,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Monica Perez",
+        "modified": "Monica Perez",
+        "excel_row": 11,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "SED-09",
+        "modified": "SED-09",
+        "excel_row": 11,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Rear-end collision",
+        "modified": "Rear-end collision",
+        "excel_row": 11,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 11,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "8500",
+        "modified": "8500",
+        "excel_row": 11,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "3200",
+        "modified": "3200",
+        "excel_row": 11,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "4100",
+        "modified": "4100",
+        "excel_row": 11,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "15800",
+        "modified": "15800",
+        "excel_row": 11,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 11,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 11,
+        "excel_col": 13
+      }
+    },
+    "CA-009": {
+      "Claim #": {
+        "value": "CA-009",
+        "modified": "CA-009",
+        "excel_row": 12,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "04-09-2023 00:00",
+        "modified": "04-09-2023 00:00",
+        "excel_row": 12,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "05-09-2023 00:00",
+        "modified": "05-09-2023 00:00",
+        "excel_row": 12,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Derek Nash",
+        "modified": "Derek Nash",
+        "excel_row": 12,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "TRK-17",
+        "modified": "TRK-17",
+        "excel_row": 12,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Head-on collision",
+        "modified": "Head-on collision",
+        "excel_row": 12,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 12,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 12,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "8900",
+        "modified": "8900",
+        "excel_row": 12,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "14200",
+        "modified": "14200",
+        "excel_row": 12,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "23100",
+        "modified": "23100",
+        "excel_row": 12,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "95000",
+        "modified": "95000",
+        "excel_row": 12,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "OPEN",
+        "modified": "OPEN",
+        "excel_row": 12,
+        "excel_col": 13
+      }
+    },
+    "CA-010": {
+      "Claim #": {
+        "value": "CA-010",
+        "modified": "CA-010",
+        "excel_row": 13,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "30-01-2024 00:00",
+        "modified": "30-01-2024 00:00",
+        "excel_row": 13,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "01-02-2024 00:00",
+        "modified": "01-02-2024 00:00",
+        "excel_row": 13,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Shonda Lewis",
+        "modified": "Shonda Lewis",
+        "excel_row": 13,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "VAN-02",
+        "modified": "VAN-02",
+        "excel_row": 13,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Weather - ice",
+        "modified": "Weather - ice",
+        "excel_row": 13,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "No",
+        "modified": "No",
+        "excel_row": 13,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 13,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "5600",
+        "modified": "5600",
+        "excel_row": 13,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 13,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "5600",
+        "modified": "5600",
+        "excel_row": 13,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 13,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 13,
+        "excel_col": 13
+      }
+    },
+    "CA-011": {
+      "Claim #": {
+        "value": "CA-011",
+        "modified": "CA-011",
+        "excel_row": 14,
+        "excel_col": 1
+      },
+      "Loss Date": {
+        "value": "12-03-2024 00:00",
+        "modified": "12-03-2024 00:00",
+        "excel_row": 14,
+        "excel_col": 2
+      },
+      "Date Reported": {
+        "value": "13-03-2024 00:00",
+        "modified": "13-03-2024 00:00",
+        "excel_row": 14,
+        "excel_col": 3
+      },
+      "Claimant Name": {
+        "value": "Victor Okafor",
+        "modified": "Victor Okafor",
+        "excel_row": 14,
+        "excel_col": 4
+      },
+      "Vehicle ID": {
+        "value": "TRK-05",
+        "modified": "TRK-05",
+        "excel_row": 14,
+        "excel_col": 5
+      },
+      "Cause of Loss": {
+        "value": "Backing accident",
+        "modified": "Backing accident",
+        "excel_row": 14,
+        "excel_col": 6
+      },
+      "At Fault": {
+        "value": "Yes",
+        "modified": "Yes",
+        "excel_row": 14,
+        "excel_col": 7
+      },
+      "BI Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 14,
+        "excel_col": 8
+      },
+      "PD Paid": {
+        "value": "1200",
+        "modified": "1200",
+        "excel_row": 14,
+        "excel_col": 9
+      },
+      "Medical Paid": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 14,
+        "excel_col": 10
+      },
+      "Total Paid": {
+        "value": "1200",
+        "modified": "1200",
+        "excel_row": 14,
+        "excel_col": 11
+      },
+      "Reserve": {
+        "value": "0",
+        "modified": "0",
+        "excel_row": 14,
+        "excel_col": 12
+      },
+      "Status": {
+        "value": "CLOSED",
+        "modified": "CLOSED",
+        "excel_row": 14,
+        "excel_col": 13
+      }
+    }
+  },
+  "sheet_type": "LOSS_RUN",
+  "total_rows": 15,
+  "total_cols": 13,
+  "sheet_name": "Sheet1",
+  "col_rename_log": {
+    "Date of Loss": "Loss Date",
+    "Date Reported": "Date Reported",
+    "Driver Name": "Claimant Name",
+    "Vehicle ID": "Vehicle ID",
+    "Type of Loss": "Cause of Loss",
+    "At Fault": "At Fault",
+    "Medical Paid": "Medical Paid",
+    "Total Paid": "Total Paid",
+    "Reserve": "Reserve",
+    "Status": "Status"
+  }
+}

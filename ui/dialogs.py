@@ -860,17 +860,17 @@ def show_claim_journey_dialog(
     from modules.audit import _load_audit_log
     from modules.field_history import _get_field_history
     from modules.schema_mapping import map_claim_to_schema
-
+ 
     _audit_expand_key = f"_audit_expanded_{selected_sheet}_{claim_id}"
     _full_hist_key    = f"_audit_fullhist_{selected_sheet}_{claim_id}"
     if _audit_expand_key not in st.session_state:
         st.session_state[_audit_expand_key] = set()
     if _full_hist_key not in st.session_state:
         st.session_state[_full_hist_key] = False
-
+ 
     _ts_dialog_open = _dt.datetime.now()
     _ts_fmt = lambda d: d.strftime("%H:%M:%S.%f")[:-3]
-
+ 
     st.markdown(
         f"<div style='font-size:18px;font-weight:700;color:{_D_TXT};margin-bottom:4px;'>"
         f"🔍 Transformation Journey</div>"
@@ -882,13 +882,13 @@ def show_claim_journey_dialog(
         f"⏱ Dialog opened at {_ts_fmt(_ts_dialog_open)}</div>",
         unsafe_allow_html=True,
     )
-
+ 
     _all_audit   = _load_audit_log()
     _claim_audit = [
         e for e in _all_audit
         if e.get("claim_id") == claim_id and e.get("sheet") == selected_sheet
     ]
-
+ 
     _ts_llm_unpack   = _dt.datetime.now()
     _llm_mappings    = (_llm_map_result or {}).get("mappings", {})
     _llm_reasoning   = (_llm_map_result or {}).get("_reasoning", {})
@@ -896,7 +896,10 @@ def show_claim_journey_dialog(
     _llm_model       = (_llm_map_result or {}).get("_model", "see .env")
     _llm_reverse     = {v: k for k, v in _llm_mappings.items()}
     _llm_source_cols = set(_llm_mappings.keys())
-
+    # _skipped replaces the old _unmapped; internal only, never shown in UI
+    _llm_skipped = (_llm_map_result or {}).get("_skipped",
+                        (_llm_map_result or {}).get("_unmapped", []))
+ 
     _ts_schema_map = _dt.datetime.now()
     _mapped: dict = {}
     if active_schema:
@@ -905,7 +908,7 @@ def show_claim_journey_dialog(
             _mapped = map_claim_to_schema(curr_claim, active_schema, {}, _llm_map_result)
     _ts_schema_map_done = _dt.datetime.now()
     _schema_map_ms = int((_ts_schema_map_done - _ts_schema_map).total_seconds() * 1000)
-
+ 
     # ── Pipeline trace ────────────────────────────────────────────────────────
     _pipeline_steps = []
     _step_row = (
@@ -919,7 +922,7 @@ def show_claim_journey_dialog(
         f"<span style='font-size:9px;color:{_D_LBL};font-family:monospace;white-space:nowrap;'>{ts}</span>"
         f"</div>"
     )
-
+ 
     _pipeline_steps.append(_step_row(
         _D_GRN, "📂", "FILE PARSED",
         "Claims read from the uploaded spreadsheet",
@@ -949,7 +952,7 @@ def show_claim_journey_dialog(
             f"{_edit_count} field(s) manually updated by the user",
             (_last_edit_ts.replace("T", " ") if _last_edit_ts else "—")
         ))
-
+ 
     st.markdown(
         f"<div style='background:{_D_BG};border:1px solid {_D_BDR};border-left:4px solid {_D_YEL};"
         f"border-radius:8px;padding:12px 16px;margin-bottom:16px;"
@@ -960,7 +963,7 @@ def show_claim_journey_dialog(
         + "</div>",
         unsafe_allow_html=True,
     )
-
+ 
     # ── Field timeline header ─────────────────────────────────────────────────
     st.markdown(
         f"<div style='display:flex;align-items:center;gap:8px;margin-bottom:12px;'>"
@@ -970,20 +973,20 @@ def show_claim_journey_dialog(
         f"</div>",
         unsafe_allow_html=True,
     )
-
-    def _step_circle(n: int | str, color: str, bg: str) -> str:
+ 
+    def _step_circle(n, color: str, bg: str) -> str:
         return (
             f"<div style='min-width:22px;height:22px;border-radius:50%;"
             f"background:{bg};border:2px solid {color};"
             f"display:flex;align-items:center;justify-content:center;"
             f"font-size:10px;color:{color};font-weight:bold;flex-shrink:0;'>{n}</div>"
         )
-
+ 
     fields_to_show = list(_mapped.keys()) if _mapped else list(curr_claim.keys())
-
+ 
     for field in fields_to_show:
         _ts_field = _dt.datetime.now()
-
+ 
         if _mapped and field in _mapped:
             m          = _mapped[field]
             raw_val    = m["info"].get("value", "")
@@ -1006,43 +1009,53 @@ def show_claim_journey_dialog(
             conf       = info.get("confidence", 0)
             from_title = info.get("from_title", False)
             llm_mapped = (field in _llm_source_cols) or (field in _llm_reverse)
-
+ 
         mk_schema = f"mod_{selected_sheet}_{claim_id}_schema_{field}"
         mk_plain  = f"mod_{selected_sheet}_{claim_id}_{field}"
         cur_val   = st.session_state.get(mk_schema) or st.session_state.get(mk_plain) or raw_val
         edits     = _get_field_history(selected_sheet, claim_id, field)
         is_edited = cur_val != raw_val
-
+ 
         if from_title:
-            method, method_color, method_icon = "TITLE ROW",   _D_PUR, "📋"
+            method, method_color, method_icon = "TITLE ROW",    _D_PUR, "📋"
             method_fn = "parsing.py · extract_title_fields()"
         elif llm_mapped:
-            method, method_color, method_icon = "LLM MAPPED",  _D_YEL, "🤖"
+            method, method_color, method_icon = "LLM MAPPED",   _D_YEL, "🤖"
             method_fn = f"modules.llm · llm_map_unknown_fields() → {_llm_model}"
         elif hdr_score >= 90:
-            method, method_color, method_icon = "EXACT MATCH", _D_GRN, "✓"
+            method, method_color, method_icon = "EXACT MATCH",  _D_GRN, "✓"
             method_fn = "modules.schema_mapping · _header_match_score()"
         elif hdr_score >= 65:
-            method, method_color, method_icon = "FUZZY MATCH", _D_BLU, "~"
+            method, method_color, method_icon = "FUZZY MATCH",  _D_BLU, "~"
             method_fn = "modules.schema_mapping · _header_match_score() [fuzzy]"
         elif hdr_score > 0:
             method, method_color, method_icon = "PARTIAL MATCH", _D_LBL, "≈"
             method_fn = "modules.schema_mapping · _header_match_score() [partial]"
         else:
-            method, method_color, method_icon = "DIRECT", _D_LBL, "→"
-            method_fn = "modules.parsing · direct column read"
-
+            # Could be a sub-row inferred field or a plain direct read
+            _field_info = (
+                (_mapped.get(field) or {}).get("info", {})
+                if _mapped else
+                curr_claim.get(field, {})
+            )
+            if _field_info.get("subrow_inferred"):
+                method, method_color, method_icon = "SUB-ROW INFERRED", _D_GRN, "⚡"
+                method_fn = "modules.parsing · _classify_subrow_cell() [pattern match]"
+            else:
+                method, method_color, method_icon = "DIRECT", _D_LBL, "→"
+                method_fn = "modules.parsing · direct column read"
+ 
         conf_color   = _D_GRN if conf >= 80 else _D_YEL if conf >= 50 else _D_RED
         _display_val = raw_val if raw_val else f"<span style='color:{_D_LBL};'>(empty)</span>"
         _field_ts    = _ts_fmt(_ts_field)
-
+ 
         val_box_style = (
             f"font-size:13px;color:{_D_TXT};font-family:monospace;"
             f"background:{_D_BG2};border:1px solid {_D_BDR};border-radius:4px;"
             f"padding:4px 8px;margin-top:4px;word-break:break-all;"
         )
         code_style = f"background:{_D_BG2};padding:1px 5px;border-radius:3px;border:1px solid {_D_BDR};color:{_D_TXT};"
-
+ 
         steps_html = (
             # Step 1 — Extraction
             f"<div style='display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;'>"
@@ -1068,6 +1081,8 @@ def show_claim_journey_dialog(
             f"<span style='font-size:9px;color:{_D_LBL};font-family:monospace;margin-left:auto;'>"
             f"⏱ {_field_ts} · {method_fn}</span></div>"
         )
+ 
+        # ── Step 2 detail: show HOW the field was matched ─────────────────────
         if llm_mapped:
             _src_col = _llm_reverse.get(field, field)
             _reason  = _llm_reasoning.get(_src_col, "")
@@ -1092,12 +1107,106 @@ def show_claim_journey_dialog(
                 f"Overall confidence: <span style='color:{conf_color};font-weight:700;'>{conf}%</span></div>"
             )
         else:
-            steps_html += (
-                f"<div style='font-size:12px;color:{_D_LBL};margin-top:2px;'>"
-                f"Column name matches field directly</div>"
+            # Sub-row inferred OR plain direct column read
+            _field_info_for_detail = (
+                (_mapped.get(field) or {}).get("info", {})
+                if _mapped else
+                curr_claim.get(field, {})
             )
+            _subrow_detail = _field_info_for_detail.get("match_detail", "") if _field_info_for_detail.get("subrow_inferred") else ""
+ 
+            if _subrow_detail:
+                steps_html += (
+                    f"<div style='font-size:12px;color:{_D_LBL};margin-top:2px;'>"
+                    f"Sub-row field — inferred from pattern matching</div>"
+                    f"<div style='font-size:11px;color:{_D_GRN};font-style:italic;"
+                    f"margin-top:3px;padding:4px 8px;background:{_D_GRN_BG};"
+                    f"border-left:2px solid {_D_GRN};border-radius:0 4px 4px 0;'>"
+                    f"Match detail: {_subrow_detail}</div>"
+                )
+            else:
+                steps_html += (
+                    f"<div style='font-size:12px;color:{_D_LBL};margin-top:2px;'>"
+                    f"Direct column read — header name matches field exactly</div>"
+                )
+ 
         steps_html += "</div></div>"
-
+ 
+        # ── Cause of Loss signal badge ────────────────────────────────────────
+        # Show whenever the field is cause-of-loss so the detection method and
+        # the matched signal text are prominently visible to the reviewer.
+        _is_col_field = (
+            "cause of loss" in field.lower()
+            or "cause_of_loss" in field.lower()
+            or (excel_col and "cause" in str(excel_col).lower())
+        )
+        if _is_col_field and raw_val:
+            _field_info_col = (
+                (_mapped.get(field) or {}).get("info", {})
+                if _mapped else
+                curr_claim.get(field, {})
+            )
+            if llm_mapped:
+                _col_method  = "LLM inference"
+                _col_color   = _D_YEL
+                _col_bg      = _D_YEL_BG
+                _col_icon    = "🤖"
+                _col_detail  = _llm_reasoning.get(_llm_reverse.get(field, field), "")
+            elif _field_info_col.get("subrow_inferred"):
+                _col_method  = "sub-row pattern match"
+                _col_color   = _D_GRN
+                _col_bg      = _D_GRN_BG
+                _col_icon    = "⚡"
+                _col_detail  = _field_info_col.get("match_detail", "")
+            elif hdr_score >= 90:
+                _col_method  = "exact header match"
+                _col_color   = _D_GRN
+                _col_bg      = _D_GRN_BG
+                _col_icon    = "✓"
+                _col_detail  = ""
+            elif hdr_score >= 65:
+                _col_method  = "fuzzy header match"
+                _col_color   = _D_BLU
+                _col_bg      = _D_BLU_BG
+                _col_icon    = "~"
+                _col_detail  = ""
+            else:
+                _col_method  = "direct column read"
+                _col_color   = _D_LBL
+                _col_bg      = "#f8f9fc"
+                _col_icon    = "→"
+                _col_detail  = ""
+ 
+            _col_detail_html = (
+                f"<div style='font-size:10px;color:{_col_color};"
+                f"font-family:monospace;font-style:italic;margin-top:3px;'>"
+                f"{_col_detail}</div>"
+            ) if _col_detail else ""
+ 
+            steps_html += (
+                f"<div style='margin-left:11px;border-left:2px dashed {_D_BDR};"
+                f"height:8px;margin-bottom:8px;'></div>"
+                f"<div style='display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;'>"
+                f"<div style='min-width:22px;height:22px;border-radius:50%;"
+                f"background:{_col_bg};border:2px solid {_col_color};"
+                f"display:flex;align-items:center;justify-content:center;"
+                f"font-size:10px;color:{_col_color};font-weight:bold;flex-shrink:0;'>⚑</div>"
+                f"<div style='flex:1;'>"
+                f"<div style='font-size:11px;font-weight:700;color:{_col_color};"
+                f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
+                f"margin-bottom:3px;'>{_col_icon} Cause of Loss signal detected</div>"
+                f"<div style='background:{_col_bg};border:1px solid {_col_color}60;"
+                f"border-left:3px solid {_col_color};border-radius:0 4px 4px 0;"
+                f"padding:6px 10px;font-family:monospace;font-size:12px;color:{_D_TXT};'>"
+                f"<span style='font-size:9px;color:{_col_color};font-weight:700;"
+                f"text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:2px;'>"
+                f"Method: {_col_method}</span>"
+                f"<span style='font-weight:600;'>{raw_val}</span>"
+                f"{_col_detail_html}"
+                f"</div></div></div>"
+            )
+ 
+        # ── User edits ────────────────────────────────────────────────────────
         for i, edit in enumerate(edits):
             steps_html += (
                 f"<div style='margin-left:11px;border-left:2px dashed {_D_BDR};height:8px;margin-bottom:8px;'></div>"
@@ -1121,7 +1230,7 @@ def show_claim_journey_dialog(
                 f"<span style='font-size:10px;'>TO: </span>{edit['to']}</div>"
                 f"</div></div></div>"
             )
-
+ 
         if is_edited:
             steps_html += (
                 f"<div style='margin-left:11px;border-left:2px dashed {_D_BDR};height:8px;margin-bottom:8px;'></div>"
@@ -1133,7 +1242,7 @@ def show_claim_journey_dialog(
                 f"<div style='{val_box_style}color:{_D_GRN};border-color:{_D_GRN}60;'>{cur_val}</div>"
                 f"</div></div>"
             )
-
+ 
         border_c = _D_YEL if is_edited else _D_BDR
         bg_c     = _D_YEL_BG if is_edited else _D_BG
         mod_badge = (
@@ -1152,11 +1261,11 @@ def show_claim_journey_dialog(
             f"{field}{mod_badge}</div>{steps_html}</div>",
             unsafe_allow_html=True,
         )
-
+ 
     # ── Audit log ─────────────────────────────────────────────────────────────
     if _claim_audit:
         st.markdown("---")
-
+ 
         _ev_cfg = {
             "FIELD_EDITED":             (_D_BLU,  "✏",  "Field edited"),
             "FIELD_ADDED":              (_D_PUR,  "＋", "Custom field added"),
@@ -1166,10 +1275,10 @@ def show_claim_journey_dialog(
             "LLM_CAUSE_ENRICHED":       (_D_LBL,  "🤖", "LLM enriched"),
             "CLAIM_DUPLICATE_DETECTED": (_D_RED,  "⚠",  "Duplicate detected"),
         }
-
+ 
         _USER_EVENTS  = {"FIELD_EDITED", "FIELD_ADDED", "EXPORT_GENERATED"}
         _session_start = st.session_state.get("_session_start", "")
-
+ 
         _seen_llm = False
         _deduped_audit: list = []
         for _e in _claim_audit:
@@ -1179,19 +1288,19 @@ def show_claim_journey_dialog(
                     _seen_llm = True
             else:
                 _deduped_audit.append(_e)
-
+ 
         _session_user_events = [
             e for e in _deduped_audit
             if e.get("event") in _USER_EVENTS and e.get("timestamp", "") >= _session_start
         ]
         _full_events = _deduped_audit
         _show_full   = st.session_state[_full_hist_key]
-
+ 
         _type_counts: dict[str, int] = {}
         for _e in _session_user_events:
             _t = _e.get("event", "EVENT")
             _type_counts[_t] = _type_counts.get(_t, 0) + 1
-
+ 
         _summary_pills = "".join(
             f"<span style='background:{_ev_cfg.get(_t,(_D_LBL,'•',''))[0]}18;"
             f"border:1px solid {_ev_cfg.get(_t,(_D_LBL,'•',''))[0]}55;"
@@ -1200,7 +1309,7 @@ def show_claim_journey_dialog(
             f"{_ev_cfg.get(_t,(_D_LBL,'•',_t))[1]} {_n} {_t.replace('_',' ').lower()}</span>"
             for _t, _n in _type_counts.items()
         )
-
+ 
         _hdr_col, _btn_col = st.columns([7, 3])
         with _hdr_col:
             st.markdown(
@@ -1222,7 +1331,7 @@ def show_claim_journey_dialog(
                 use_container_width=True,
                 on_click=_toggle_full_hist,
             )
-
+ 
         def _render_audit_rows(events: list, id_prefix: str) -> None:
             for _ei, _event in enumerate(events):
                 _ev_type  = _event.get("event", "EVENT")
@@ -1235,7 +1344,7 @@ def show_claim_journey_dialog(
                 _cfg      = _ev_cfg.get(_ev_type, (_D_LBL, "•", _ev_type))
                 _ev_color = _cfg[0]
                 _ev_icon  = _cfg[1]
-
+ 
                 _detail = ""
                 if _ev_type == "FIELD_EDITED" and _ev_field:
                     _sf   = str(_ev_from)[:22] + ("…" if len(str(_ev_from)) > 22 else "")
@@ -1260,16 +1369,16 @@ def show_claim_journey_dialog(
                         f"<span style='color:{_D_TXT};'>{_cause}</span>"
                         if _cause else f"<span style='color:{_D_LBL};font-style:italic;'>first enrichment only</span>"
                     )
-
+ 
                 _card_key = f"{id_prefix}_{_ei}"
                 _expanded = _card_key in st.session_state[_audit_expand_key]
-
+ 
                 def _toggle_card(_ck=_card_key, _ek=_audit_expand_key):
                     if _ck in st.session_state[_ek]:
                         st.session_state[_ek].discard(_ck)
                     else:
                         st.session_state[_ek].add(_ck)
-
+ 
                 _row_col, _xbtn_col = st.columns([10, 1])
                 with _row_col:
                     st.markdown(
@@ -1295,18 +1404,18 @@ def show_claim_journey_dialog(
                         help="Expand / collapse full details",
                         on_click=_toggle_card,
                     )
-
+ 
                 if _expanded:
                     _detail_rows = ""
                     for _k, _v in _event.items():
                         if _k == "event" or _v in (None, "", []):
                             continue
                         _vs = str(_v)
-                        if _k == "original":               _vc = _D_RED
-                        elif _k == "new_value":            _vc = _D_GRN
-                        elif _k == "timestamp":            _vc = _D_LBL
+                        if _k == "original":                _vc = _D_RED
+                        elif _k == "new_value":             _vc = _D_GRN
+                        elif _k == "timestamp":             _vc = _D_LBL
                         elif _k in ("field", "export_type"): _vc = _D_TXT
-                        else:                              _vc = _D_LBL
+                        else:                               _vc = _D_LBL
                         _detail_rows += (
                             f"<div style='display:flex;gap:12px;padding:4px 0;"
                             f"border-bottom:1px solid {_D_BDR2};'>"
@@ -1325,7 +1434,7 @@ def show_claim_journey_dialog(
                     )
                 else:
                     st.markdown("<div style='margin-bottom:6px;'></div>", unsafe_allow_html=True)
-
+ 
         if not _session_user_events:
             st.markdown(
                 f"<div style='color:{_D_LBL};font-size:12px;font-family:monospace;"
@@ -1335,7 +1444,7 @@ def show_claim_journey_dialog(
             )
         else:
             _render_audit_rows(_session_user_events, f"user_{selected_sheet}_{claim_id}")
-
+ 
         if _show_full:
             _llm_count_raw = sum(1 for e in _claim_audit if e.get("event") == "LLM_CAUSE_ENRICHED")
             _suppressed    = _llm_count_raw - (1 if _llm_count_raw > 0 else 0)
@@ -1350,7 +1459,8 @@ def show_claim_journey_dialog(
             )
             _render_audit_rows(_full_events, f"full_{selected_sheet}_{claim_id}")
             st.markdown("</div>", unsafe_allow_html=True)
-
+ 
     if st.button("Close", type="primary", use_container_width=True):
         st.session_state.pop("_open_journey_dialog", None)
         st.rerun()
+ 

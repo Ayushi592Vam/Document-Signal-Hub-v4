@@ -3,31 +3,12 @@ modules/parsing.py
 Excel / CSV ingestion: classify sheet type, parse rows into list-of-dicts,
 skip aggregate/totals rows.
 
-Handles both clean structured layouts and messy legacy "print-style" formats
-where:
-  - Column headers span two rows (group label + sub-label)
-  - Each claim has a sub-row with the address (col B) and cause-of-loss (col D)
-  - Section separator rows contain only '----------' dashes
-  - Section subtotal rows start with 'Total ...'
-
-NEW (title extraction):
-  extract_sheet_title_kvs() scans the pre-header rows of any sheet and returns
-  a dict of canonical key → value pairs (TPA Name, Treaty, Cedant,
-  Valuation Date, Sheet Title, Sheet Name …).  extract_from_excel() now
-  returns this dict as a third element so callers can pass it downstream to
-  schema_mapping.extract_title_fields_from_kvs().
-
-CHANGED (smart sub-row inference):
-  Sub-rows in legacy print layouts are no longer parsed by hardcoded column
-  positions (col B = Address, col D = Cause of Loss).  Instead every non-empty
-  cell on a sub-row is classified by value pattern:
-    • Street address pattern      → "Address"
-    • City / State / ZIP pattern  → "City State Zip"
-    • Known peril / event words   → "Cause of Loss"
-    • Proper-noun name pattern    → "Claimant Name"
-    • Unclassifiable in any col   → "SubRow_<col>"   (data preserved, not dropped)
-  This allows the parser to handle sheets where address/cause appear in
-  non-standard column positions without any positional assumptions.
+CHANGED (sub-row match detail):
+  _classify_subrow_cell() now returns (field_name, match_detail) so the
+  transformation journey dialog can show exactly which regex or heuristic
+  caused a sub-row cell to be assigned to "Address", "Cause of Loss", etc.
+  _enrich_field() stores match_detail and subrow_inferred=True in the claim
+  dict so dialogs.py can surface this in Step 2 of the field timeline.
 """
 
 import csv
@@ -44,8 +25,6 @@ from modules.cell_format import format_cell_value_with_fmt
 def classify_sheet(rows) -> str:
     text = " ".join(str(cell).lower() for row in rows[:20] for cell in row if cell)
 
-    # SUMMARY detection: "line of business" must co-occur with summary-specific
-    # signals, not just appear as a data column header in a loss-run sheet.
     if "line of business" in text:
         summary_co_signals = [
             "# claims", "num claims", "number of claims", "claim count",
@@ -53,7 +32,6 @@ def classify_sheet(rows) -> str:
         ]
         if any(sig in text for sig in summary_co_signals):
             return "SUMMARY"
-        # Also SUMMARY if "line of business" is a standalone first-cell row label
         for row in rows[:20]:
             non_empty = [v for v in row if v is not None and str(v).strip()]
             if non_empty and str(non_empty[0]).lower().strip() == "line of business" and len(non_empty) == 1:
@@ -85,22 +63,11 @@ def classify_sheet(rows) -> str:
 # ── Legacy-layout detector ────────────────────────────────────────────────────
 
 def _is_legacy_print_layout(rows: list) -> bool:
-    """
-    Detect a legacy print-style TPA loss run layout.
-    Signatures:
-      - Two adjacent rows that together form the column header (neither row
-        alone passes _find_header_row's threshold, but together they do).
-      - Rows consisting entirely of '----------' dashes appear in the data area.
-      - Sub-rows where only columns B and/or D have values (address + cause).
-    """
-    # Check for '----------' separator rows
     for row in rows:
         non_empty = [c for c in row if c is not None]
         if non_empty and all(str(c).strip() == "----------" for c in non_empty):
             return True
 
-    # Check for the characteristic 2-row header pattern:
-    # row N has group labels in some cols, row N+1 has sub-labels in ALL cols
     for i in range(min(20, len(rows) - 1)):
         r1_vals = [str(c).strip() for c in rows[i] if c is not None]
         r2_vals = [str(c).strip() for c in rows[i + 1] if c is not None]
@@ -117,10 +84,6 @@ def _is_legacy_print_layout(rows: list) -> bool:
 
 
 def _find_legacy_header_rows(rows: list) -> tuple[int, int] | None:
-    """
-    For legacy layouts find the two consecutive rows that form the header.
-    Returns (row_index_of_group_label_row, row_index_of_sub_label_row) or None.
-    """
     for i in range(min(25, len(rows) - 1)):
         r1 = rows[i]
         r2 = rows[i + 1]
@@ -142,10 +105,6 @@ def _find_legacy_header_rows(rows: list) -> tuple[int, int] | None:
 
 
 def _merge_two_header_rows(row1: list, row2: list) -> list[str]:
-    """
-    Combine a group-label row and a sub-label row into one list of column names.
-    Duplicate merged names get a numeric suffix (_2, _3 …).
-    """
     headers: list[str] = []
     seen: dict[str, int] = {}
     for g, s in zip(row1, row2):
@@ -170,7 +129,6 @@ def _merge_two_header_rows(row1: list, row2: list) -> list[str]:
 # ── Sub-row / separator / subtotal detectors ─────────────────────────────────
 
 def _is_separator_row(row_values: list) -> bool:
-    """Row containing only '----------' dashes (and empty cells)."""
     non_empty = [c for c in row_values if c is not None and str(c).strip()]
     if not non_empty:
         return False
@@ -178,7 +136,6 @@ def _is_separator_row(row_values: list) -> bool:
 
 
 def _is_subtotal_row(row_values: list) -> bool:
-    """Row whose first non-empty cell starts with 'Total' (section subtotal)."""
     for c in row_values:
         if c is not None and str(c).strip():
             return bool(re.match(r"^total\b", str(c).strip(), re.IGNORECASE))
@@ -186,12 +143,6 @@ def _is_subtotal_row(row_values: list) -> bool:
 
 
 def _is_legacy_sub_row(row_values: list, num_cols: int) -> bool:
-    """
-    In legacy print layouts each claim is followed by a sub-row containing
-    only the address (col B / index 1) and/or cause-of-loss (col D / index 3).
-    Signature: col 0 (FILE NUM) is empty, ≤ 3 non-empty cells total, and at
-    least one of col 1 or col 3 has a value.
-    """
     if not row_values or row_values[0] is not None:
         return False
     non_empty = [c for c in row_values if c is not None and str(c).strip()]
@@ -206,7 +157,6 @@ def _is_legacy_sub_row(row_values: list, num_cols: int) -> bool:
 
 # ── Smart sub-row cell classifier ─────────────────────────────────────────────
 
-# Street address: starts with a number followed by a street name
 _ADDRESS_PAT = re.compile(
     r"""
     ^(
@@ -218,7 +168,6 @@ _ADDRESS_PAT = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 
-# Street suffix keywords that strongly imply an address line
 _ADDRESS_SUFFIX = re.compile(
     r"\b(st|street|ave|avenue|blvd|boulevard|rd|road|dr|drive|"
     r"ln|lane|ct|court|pl|place|way|cir|circle|hwy|highway|"
@@ -227,7 +176,6 @@ _ADDRESS_SUFFIX = re.compile(
     re.IGNORECASE,
 )
 
-# City / State / ZIP  — "AUSTIN TX 78701" or "AUSTIN, TX" or "78701"
 _CITY_STATE_ZIP_PAT = re.compile(
     r"""
     ^(
@@ -239,7 +187,6 @@ _CITY_STATE_ZIP_PAT = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 
-# Cause of loss: typical peril / event words
 _CAUSE_OF_LOSS_PAT = re.compile(
     r"\b(fire|flood|wind|windstorm|hail|storm|tornado|hurricane|"
     r"tropical\s+storm|water\s+damage|water\s+intrusion|theft|"
@@ -251,14 +198,12 @@ _CAUSE_OF_LOSS_PAT = re.compile(
     re.IGNORECASE,
 )
 
-# Name pattern: two or more capitalised words, no digits
 _NAME_PAT = re.compile(
     r"^[A-Z][A-Za-z'-]+(\s+[A-Z][A-Za-z'-]+){1,4}$"
 )
 
 
 def _col_letter(col_index: int) -> str:
-    """Convert 0-based column index to Excel letter (0→A, 1→B, …)."""
     result = ""
     n = col_index + 1
     while n:
@@ -267,11 +212,18 @@ def _col_letter(col_index: int) -> str:
     return result
 
 
-def _classify_subrow_cell(value: str) -> str:
+# ── CHANGED: returns (field_name, match_detail) ───────────────────────────────
+def _classify_subrow_cell(value: str) -> tuple[str, str]:
     """
     Classify a single sub-row cell value into a semantic field name.
 
-    Returns one of:
+    Returns (field_name, match_detail) where match_detail is a human-readable
+    description of which regex / heuristic caused the classification.
+    This detail is forwarded all the way to the transformation journey dialog
+    so reviewers can see exactly why a field was inferred (e.g. "regex: peril
+    keyword matched — 'Tropical Storm'").
+
+    field_name is one of:
       "Address"        – looks like a street address line
       "City State Zip" – looks like city/state/zip continuation
       "Cause of Loss"  – matches known peril / event vocabulary
@@ -280,56 +232,54 @@ def _classify_subrow_cell(value: str) -> str:
     """
     v = str(value).strip()
     if not v:
-        return "Unknown"
+        return "Unknown", "empty value"
 
     if _ADDRESS_PAT.match(v):
-        return "Address"
+        return "Address", "regex: street-number + name pattern (e.g. '391 MAIN ST', 'PO BOX …')"
     if _ADDRESS_SUFFIX.search(v) and re.search(r'\d', v):
-        return "Address"
+        suffix_m = _ADDRESS_SUFFIX.search(v)
+        suffix   = suffix_m.group(0) if suffix_m else ""
+        return "Address", f"regex: street-suffix keyword '{suffix.upper()}' + digit present"
     if _CITY_STATE_ZIP_PAT.match(v):
-        return "City State Zip"
-    if _CAUSE_OF_LOSS_PAT.search(v):
-        return "Cause of Loss"
+        return "City State Zip", "regex: City ST 00000 / two-letter state / ZIP-only pattern"
+    m = _CAUSE_OF_LOSS_PAT.search(v)
+    if m:
+        peril = m.group(0)
+        return "Cause of Loss", f"regex: peril keyword matched — \"{peril}\""
     if _NAME_PAT.match(v) and not re.search(r'\d', v):
-        return "Claimant Name"
-    return "Unknown"
+        return "Claimant Name", "regex: proper-noun name pattern (Title-cased words, no digits)"
+    return "Unknown", "no pattern matched — stored verbatim"
 
 
-def _infer_subrow_fields(raw_row: list) -> dict[str, tuple[str, int]]:
+# ── CHANGED: result tuple is now (value, col, match_detail) ──────────────────
+def _infer_subrow_fields(raw_row: list) -> dict[str, tuple[str, int, str]]:
     """
     Given a raw sub-row (list of cell values), return a dict mapping
-    inferred field names → (value, 1-based col index).
+    inferred field names → (value, 1-based col index, match_detail).
 
-    Strategy:
-      1. Classify every non-empty cell by _classify_subrow_cell().
-      2. If a field type was confidently identified, use it.
-      3. If classification is "Unknown", store as "SubRow_<col_letter>" so
-         data is preserved and not silently dropped. No positional assumptions
-         are made — a value that cannot be pattern-classified is never
-         force-assigned to Address or Cause of Loss based on column position.
-      4. If a field type is claimed by two cells, the second gets a _2 suffix.
+    match_detail is the human-readable description of which regex/heuristic
+    produced the classification — forwarded to _enrich_field() so the
+    transformation journey dialog can show it.
     """
-    result: dict[str, tuple[str, int]] = {}
+    result: dict[str, tuple[str, int, str]] = {}
     type_count: dict[str, int] = {}
 
     for c_idx, val in enumerate(raw_row):
         if val is None or not str(val).strip():
             continue
 
-        val_s      = str(val).strip()
-        field_type = _classify_subrow_cell(val_s)
+        val_s                  = str(val).strip()
+        field_type, match_detail = _classify_subrow_cell(val_s)
 
-        # If value could not be classified by pattern, preserve it under a
-        # positionally-neutral key rather than guessing based on column index.
         if field_type == "Unknown":
-            field_type = f"SubRow_{_col_letter(c_idx)}"
+            field_type   = f"SubRow_{_col_letter(c_idx)}"
+            match_detail = f"unclassified value in col {_col_letter(c_idx)} — stored verbatim"
 
-        # Handle duplicate field types
         type_count[field_type] = type_count.get(field_type, 0) + 1
         if type_count[field_type] > 1:
             field_type = f"{field_type}_{type_count[field_type]}"
 
-        result[field_type] = (val_s, c_idx + 1)  # 1-based col
+        result[field_type] = (val_s, c_idx + 1, match_detail)   # 1-based col
 
     return result
 
@@ -343,12 +293,16 @@ def _enrich_from_subrow(
     Smart replacement for the hardcoded col-B/col-D sub-row enrichment.
 
     Infers field names from sub-row cell values using pattern matching and
-    calls _enrich_field() for each one. Unclassifiable values are stored as
-    SubRow_<col> — no positional fallback is applied.
+    calls _enrich_field() for each one.  match_detail is forwarded so
+    the transformation journey can show how each sub-row field was inferred.
     """
     inferred = _infer_subrow_fields(raw_row)
-    for field_name, (value, excel_col) in inferred.items():
-        _enrich_field(claim, field_name, value, excel_row=r_idx, excel_col=excel_col)
+    for field_name, (value, excel_col, match_detail) in inferred.items():
+        _enrich_field(
+            claim, field_name, value,
+            excel_row=r_idx, excel_col=excel_col,
+            match_detail=match_detail,
+        )
 
 
 # ── Aggregate-row detection ───────────────────────────────────────────────────
@@ -398,32 +352,26 @@ def _is_aggregate_row(row_values: list) -> bool:
 # ── Sheet title / metadata extractor ─────────────────────────────────────────
 
 _LABEL_ALIASES: dict[str, str] = {
-    # TPA / reinsurer
     "prepared for":     "Reinsurer",
     "reinsurer":        "Reinsurer",
     "prepared by":      "TPA Name",
-    # Treaty / program
     "treaty":           "Treaty",
     "program":          "Treaty",
     "policy":           "Policy Number",
-    # Cedant
     "cedant":           "Cedant",
     "ceding company":   "Cedant",
     "insurer":          "Cedant",
-    # Dates
     "valuation date":   "Valuation Date",
     "valuation":        "Valuation Date",
     "as of":            "Valuation Date",
     "report date":      "Report Date",
     "report generated": "Report Date",
     "effective date":   "Effective Date",
-    # Identifiers
     "policy number":    "Policy Number",
     "policy no":        "Policy Number",
     "policy #":         "Policy Number",
     "insured":          "Insured Name",
     "named insured":    "Insured Name",
-    # Coverage / LOB
     "line of business": "Line of Business",
     "lob":              "Line of Business",
     "coverage":         "Coverage Type",
@@ -431,17 +379,11 @@ _LABEL_ALIASES: dict[str, str] = {
 
 
 def _canonical_label(raw: str) -> str | None:
-    """Map a raw label string to a canonical field name, or None if unrecognised."""
     key = raw.strip().rstrip(":").lower()
     return _LABEL_ALIASES.get(key)
 
 
 def _try_inline_kv(cell_text: str) -> list[tuple[str, str]]:
-    """
-    Parse a single cell that contains one or more 'Key: Value' fragments.
-    E.g. "Treaty: Casualty Surplus Lines 2025" or "Cedant: Hartford Financial".
-    Returns a list of (raw_label, value) pairs.
-    """
     pairs = []
     segments = re.split(r'\s{3,}|\|', str(cell_text))
     for seg in segments:
@@ -457,9 +399,6 @@ def extract_sheet_title_kvs(
     header_row_idx: int | None,
     sheet_name: str,
 ) -> dict:
-    """
-    Extract key-value metadata from the pre-header title area of a sheet.
-    """
     scan_limit = header_row_idx if header_row_idx is not None else min(15, len(raw_rows))
     found: dict = {}
 
@@ -476,7 +415,6 @@ def extract_sheet_title_kvs(
 
     for r_idx, row in enumerate(raw_rows[:scan_limit]):
         excel_row = r_idx + 1
-
         non_empty = [
             (c_idx, v) for c_idx, v in enumerate(row)
             if v is not None and str(v).strip()
@@ -484,7 +422,6 @@ def extract_sheet_title_kvs(
         if not non_empty:
             continue
 
-        # ── Pattern A: lone title row ─────────────────────────────────────────
         if len(non_empty) == 1:
             c_idx, val = non_empty[0]
             val_s = str(val).strip()
@@ -512,7 +449,6 @@ def extract_sheet_title_kvs(
                         _store("Sheet Title", val_s, excel_row, c_idx + 1)
                 continue
 
-        # ── Pattern B: inline "Key: Value" ────────────────────────────────────
         for c_idx, val in non_empty:
             val_s = str(val).strip()
             if ":" in val_s and not re.match(r'^\d', val_s):
@@ -521,7 +457,6 @@ def extract_sheet_title_kvs(
                     if canonical:
                         _store(canonical, raw_value, excel_row, c_idx + 1)
 
-        # ── Pattern C: adjacent label/value cell pairs ─────────────────────────
         i = 0
         cells = non_empty
         while i < len(cells) - 1:
@@ -529,7 +464,6 @@ def extract_sheet_title_kvs(
             c_value_idx, value_val = cells[i + 1]
             label_s = str(label_val).strip()
             value_s = str(value_val).strip()
-
             is_label = (
                 label_s.endswith(":")
                 or _canonical_label(label_s) is not None
@@ -537,7 +471,6 @@ def extract_sheet_title_kvs(
             if is_label and ":" in label_s and not label_s.endswith(":"):
                 i += 1
                 continue
-
             if is_label:
                 canonical = (
                     _canonical_label(label_s.rstrip(":").strip())
@@ -549,7 +482,6 @@ def extract_sheet_title_kvs(
             else:
                 i += 1
 
-    # ── Always record the sheet tab name ──────────────────────────────────────
     if "Sheet Name" not in found:
         found["Sheet Name"] = {
             "value":     sheet_name,
@@ -569,20 +501,6 @@ def extract_from_excel(
     file_path: str,
     sheet_name: str,
 ) -> tuple[list, str, dict]:
-    """
-    Parse a single sheet from an Excel or CSV file.
-
-    Returns
-    -------
-    (claims, sheet_type, title_kvs)
-
-    ``claims``     – list of row-dicts in the standard ``{field: {value, modified, …}}``
-                     format, one entry per claim row.
-    ``sheet_type`` – classifier label e.g. "LOSS_RUN", "SUMMARY", "UNKNOWN".
-    ``title_kvs``  – dict of canonical metadata extracted from the pre-header
-                     title area (TPA Name, Treaty, Cedant, Valuation Date …).
-                     Empty dict for CSV files.
-    """
     ext = os.path.splitext(file_path)[1].lower()
     if ext == ".csv":
         with open(file_path, "r", encoding="utf-8-sig") as f:
@@ -627,7 +545,6 @@ def _find_header_row(rows: list) -> int | None:
 
 
 def parse_rows_with_cells(sheet_type: str, rows: list, cell_rows: list) -> tuple[list, str]:
-    # ── SUMMARY sheet ─────────────────────────────────────────────────────────
     if sheet_type == "SUMMARY":
         hri = None
         for i, row in enumerate(rows[:20]):
@@ -657,11 +574,9 @@ def parse_rows_with_cells(sheet_type: str, rows: list, cell_rows: list) -> tuple
                 extracted.append(row_data)
         return extracted, sheet_type
 
-    # ── Legacy print layout ───────────────────────────────────────────────────
     if _is_legacy_print_layout(rows):
         return _parse_legacy_layout_with_cells(sheet_type, rows, cell_rows)
 
-    # ── Standard LOSS_RUN / COMMERCIAL_LOSS_RUN ───────────────────────────────
     hri = _find_header_row(rows)
     if hri is None:
         return [], sheet_type
@@ -693,18 +608,6 @@ def parse_rows_with_cells(sheet_type: str, rows: list, cell_rows: list) -> tuple
 def _parse_legacy_layout_with_cells(
     sheet_type: str, rows: list, cell_rows: list
 ) -> tuple[list, str]:
-    """
-    Parse a legacy print-style TPA loss run sheet.
-
-    Layout quirks handled:
-    - Two-row column headers (group label row + sub-label row)
-    - Address / cause-of-loss sub-rows interleaved with claim rows
-    - '----------' separator rows between sections
-    - 'Total …' section subtotal rows (skipped as data)
-
-    Sub-row enrichment uses pure pattern-based field inference via
-    _enrich_from_subrow(). No positional assumptions are made.
-    """
     header_pair = _find_legacy_header_rows(rows)
     if header_pair is None:
         hri = _find_header_row(rows)
@@ -753,9 +656,6 @@ def _parse_legacy_layout_with_cells(
                 pending_claim = None
             continue
 
-        # --- Legacy sub-row: pure pattern-based field inference --------------
-        # No positional fallback. Unclassifiable values are stored as
-        # SubRow_<col> so data is preserved without incorrect field assignment.
         if _is_legacy_sub_row(raw_row, num_cols):
             if pending_claim is not None:
                 _enrich_from_subrow(pending_claim, raw_row, r_idx)
@@ -794,14 +694,28 @@ def _parse_legacy_layout_with_cells(
     return extracted, sheet_type
 
 
+# ── CHANGED: accepts match_detail kwarg ──────────────────────────────────────
 def _enrich_field(
-    claim: dict, field_name: str, value: str, excel_row: int, excel_col: int
+    claim: dict, field_name: str, value: str,
+    excel_row: int, excel_col: int,
+    match_detail: str = "",
 ) -> None:
-    """Add or update a field in a claim dict if not already set."""
+    """Add or update a field in a claim dict if not already set.
+
+    match_detail is stored in the claim dict so the transformation journey
+    dialog can surface exactly how a sub-row field was inferred (e.g.
+    'regex: peril keyword matched — "Tropical Storm"').
+    subrow_inferred=True marks these fields as coming from a legacy sub-row
+    rather than a header column.
+    """
     if field_name not in claim or not claim[field_name].get("value"):
         claim[field_name] = {
-            "value": value, "modified": value,
-            "excel_row": excel_row, "excel_col": excel_col,
+            "value":           value,
+            "modified":        value,
+            "excel_row":       excel_row,
+            "excel_col":       excel_col,
+            "subrow_inferred": True,
+            "match_detail":    match_detail or "sub-row pattern inference",
         }
 
 
@@ -867,12 +781,6 @@ def parse_rows(sheet_type: str, rows: list) -> tuple[list, str]:
 
 
 def _parse_legacy_layout_plain(sheet_type: str, rows: list) -> tuple[list, str]:
-    """
-    parse_rows equivalent for legacy layout when no cell objects are available.
-
-    Sub-row enrichment uses pure pattern-based inference via _enrich_from_subrow().
-    No positional fallback is applied.
-    """
     header_pair = _find_legacy_header_rows(rows)
     if header_pair is None:
         hri = _find_header_row(rows)
@@ -912,8 +820,6 @@ def _parse_legacy_layout_plain(sheet_type: str, rows: list) -> tuple[list, str]:
                 pending_claim = None
             continue
 
-        # --- Legacy sub-row: pure pattern-based field inference --------------
-        # No positional fallback. Unclassifiable values stored as SubRow_<col>.
         if _is_legacy_sub_row(raw_row, num_cols):
             if pending_claim is not None:
                 _enrich_from_subrow(pending_claim, raw_row, r_idx)

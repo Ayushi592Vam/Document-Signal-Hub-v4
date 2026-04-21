@@ -8,7 +8,7 @@ import datetime
 
 import streamlit as st
 from openpyxl.utils import get_column_letter
-from PIL import ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 from modules.field_history import _get_field_history
 from modules.excel_renderer import (
@@ -182,7 +182,7 @@ def show_eye_popup(field: str, info: dict, excel_path: str, sheet_name: str) -> 
 
             # ── Render CSV as a PIL image with a bounding box ─────────────────
             try:
-                from PIL import Image, ImageDraw, ImageFont
+                
 
                 COL_W     = 120   # pixels per data column
                 ROW_H     = 28    # pixels per row

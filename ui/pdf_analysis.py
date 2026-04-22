@@ -1446,13 +1446,14 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     new_x1 = best_r.x1
                     new_y1 = best_r.y1
 
-                    # Expand downward for long paragraph values
+                    # Expand to full width + downward for long paragraph values
                     if not is_short and len(words) > 6:
                         line_h      = best_r.height or 12
                         expand_down = min(line_h * 6, ph_pts - new_y1)
                         new_y1     += expand_down
-                        new_x0      = max(0, new_x0 - 10)
-                        new_x1      = min(pw_pts, new_x1 + 60)
+                        # Stretch to full page margins so the entire paragraph is boxed
+                        new_x0      = max(0, new_x0 - 40)
+                        new_x1      = min(pw_pts, pw_pts - 20)
 
                     x0, y0, x1, y1 = new_x0, new_y0, new_x1, new_y1
                     corrected = True
@@ -1494,7 +1495,9 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         # ── Crop with generous padding ────────────────────────────────────────
         box_w = x1 - x0
         box_h = y1 - y0
-        pad_x = max(80.0, min(120.0, box_w * 1.5))
+        # For wide/paragraph fields, use full page width so nothing is clipped
+        is_wide_field = box_w > pw_pts * 0.5
+        pad_x = 10.0 if is_wide_field else max(80.0, min(120.0, box_w * 1.5))
         pad_y = max(60.0, min(100.0, box_h * 2.0))
         crop  = fitz.Rect(
             max(0.0,    x0 - pad_x),

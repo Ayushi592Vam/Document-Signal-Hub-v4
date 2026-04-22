@@ -27716,5 +27716,27 @@
     "total_rows": 1,
     "total_cols": 30,
     "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T13:40:44.998789",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T13:41:58.859233",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
   }
 ]

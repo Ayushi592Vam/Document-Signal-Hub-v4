@@ -22,6 +22,7 @@ CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "con
 
 # ── Session-state defaults ────────────────────────────────────────────────────
 SESSION_DEFAULTS: dict = {
+    "sheet_names": [],
     "conf_threshold":      80,
     "use_conf_threshold":  False,
     "active_schema":       None,

@@ -26449,5 +26449,1081 @@
     "total_rows": 1,
     "total_cols": 52,
     "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:13:58.941881",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:15:07.879239",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:25:20.548091",
+    "filename": "Loss run sample 2.xlsx",
+    "file_hash": "cc517fc50e2a4b97d739ac2d9b13e80e24f37336ee3eee3ba731df212f608853",
+    "sheets": [
+      "Loss Run 2025",
+      "Loss Run 2024",
+      "Loss Run 2023",
+      "Loss Run 2022",
+      "Loss Run 2021",
+      "Loss Run 2020"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:25:21.089573",
+    "filename": "Loss run sample 2.xlsx",
+    "sheet": "Loss Run 2025",
+    "sheet_hash": "8a8c67dd15884acef3e21b6667c02c4d6dc5b95d7bc2e7d4c4dba461d32beba7",
+    "claim_rows": 17,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 25,
+    "total_cols": 12,
+    "col_renames": {
+      "Claim Number": "Claim Number",
+      "Policy Number": "Policy Number",
+      "Insured Name": "Insured Name",
+      "Loss Date": "Loss Date",
+      "Reported Date": "Date Reported",
+      "Status": "Status",
+      "Coverage Type": "Coverage Type",
+      "Paid Expense": "Expense Paid",
+      "Reserve Loss": "Reserve",
+      "Total Incurred": "Total Incurred"
+    }
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:21.277807",
+    "claim_id": "HRC-6825112",
+    "sheet": "Loss Run 2025",
+    "filename": "Loss run sample 2.xlsx",
+    "prev_filename": "Loss run sample 2.xlsx",
+    "changed_fields": []
+  },
+  {
+    "event": "SHEET_LOADED_FROM_CACHE",
+    "timestamp": "2026-04-21T20:25:53.443003",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165"
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:53.643397",
+    "claim_id": "CA-001",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:53.823089",
+    "claim_id": "CA-002",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:53.982857",
+    "claim_id": "CA-003",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:54.135561",
+    "claim_id": "CA-004",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:54.316565",
+    "claim_id": "CA-005",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:54.502604",
+    "claim_id": "CA-006",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:54.643565",
+    "claim_id": "CA-007",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:54.774923",
+    "claim_id": "CA-008",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:54.910019",
+    "claim_id": "CA-009",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:55.054436",
+    "claim_id": "CA-010",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:25:55.211669",
+    "claim_id": "CA-011",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:26:05.880954",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "file_hash": "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101",
+    "sheets": [
+      "Sheet1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:26:06.126225",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165",
+    "claim_rows": 11,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 15,
+    "total_cols": 13,
+    "col_renames": {
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Driver Name": "Claimant Name",
+      "Vehicle ID": "Vehicle ID",
+      "Type of Loss": "Cause of Loss",
+      "At Fault": "At Fault",
+      "Medical Paid": "Medical Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "LLM_CAUSE_ENRICHED",
+    "timestamp": "2026-04-21T20:26:08.416151",
+    "sheet": "Sheet1",
+    "claim_id": "CA-001",
+    "source_fields": [
+      "Loss Date"
+    ],
+    "input_text": "03-08-2021 00:00",
+    "cause_of_loss": "Other",
+    "summary": "The claimant alleges that an incident occurred on March 8, 2021."
+  },
+  {
+    "event": "SHEET_LOADED_FROM_CACHE",
+    "timestamp": "2026-04-21T20:26:17.551181",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165"
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:17.813129",
+    "claim_id": "CA-001",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:17.980960",
+    "claim_id": "CA-002",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:18.130271",
+    "claim_id": "CA-003",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:18.282630",
+    "claim_id": "CA-004",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:18.431034",
+    "claim_id": "CA-005",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:18.583809",
+    "claim_id": "CA-006",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:18.732451",
+    "claim_id": "CA-007",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:18.920196",
+    "claim_id": "CA-008",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:19.097874",
+    "claim_id": "CA-009",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:19.253311",
+    "claim_id": "CA-010",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "CLAIM_DUPLICATE_DETECTED",
+    "timestamp": "2026-04-21T20:26:19.400133",
+    "claim_id": "CA-011",
+    "sheet": "Sheet1",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "prev_filename": "Commercial_Auto_Loss_Run.csv",
+    "changed_fields": []
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:26:32.531708",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "file_hash": "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101",
+    "sheets": [
+      "Sheet1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:26:32.757695",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165",
+    "claim_rows": 11,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 15,
+    "total_cols": 13,
+    "col_renames": {
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Driver Name": "Claimant Name",
+      "Vehicle ID": "Vehicle ID",
+      "Type of Loss": "Cause of Loss",
+      "At Fault": "At Fault",
+      "Medical Paid": "Medical Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "LLM_CAUSE_ENRICHED",
+    "timestamp": "2026-04-21T20:26:35.060958",
+    "sheet": "Sheet1",
+    "claim_id": "CA-001",
+    "source_fields": [
+      "Loss Date"
+    ],
+    "input_text": "03-08-2021 00:00",
+    "cause_of_loss": "Other",
+    "summary": "The claimant alleges that an incident occurred on March 8, 2021."
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:35:38.123747",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "file_hash": "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101",
+    "sheets": [
+      "Sheet1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:35:38.422450",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165",
+    "claim_rows": 11,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 15,
+    "total_cols": 13,
+    "col_renames": {
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Driver Name": "Claimant Name",
+      "Vehicle ID": "Vehicle ID",
+      "Type of Loss": "Cause of Loss",
+      "At Fault": "At Fault",
+      "Medical Paid": "Medical Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "LLM_CAUSE_ENRICHED",
+    "timestamp": "2026-04-21T20:35:40.849032",
+    "sheet": "Sheet1",
+    "claim_id": "CA-001",
+    "source_fields": [
+      "Loss Date"
+    ],
+    "input_text": "03-08-2021 00:00",
+    "cause_of_loss": "Other",
+    "summary": "The claimant alleges that an incident occurred on March 8, 2021."
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:44:16.265270",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "file_hash": "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101",
+    "sheets": [
+      "Sheet1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:44:16.471026",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165",
+    "claim_rows": 11,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 15,
+    "total_cols": 13,
+    "col_renames": {
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Driver Name": "Claimant Name",
+      "Vehicle ID": "Vehicle ID",
+      "Type of Loss": "Cause of Loss",
+      "At Fault": "At Fault",
+      "Medical Paid": "Medical Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "LLM_CAUSE_ENRICHED",
+    "timestamp": "2026-04-21T20:44:18.763176",
+    "sheet": "Sheet1",
+    "claim_id": "CA-001",
+    "source_fields": [
+      "Loss Date"
+    ],
+    "input_text": "03-08-2021 00:00",
+    "cause_of_loss": "Other",
+    "summary": "The claimant alleges that an incident occurred on March 8, 2021."
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:45:13.011187",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "file_hash": "48f1e4dea6b9ec8fd1ed77df699358849d648f84ab35488b4d22aefdf7d14d00",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:46:15.110358",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "44006b32dfab4098300b7fcbcfebe5ffe08dc42b5ed85eb59c4f2ed44f24b607",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 44,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T20:55:08.939300",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T20:56:04.153970",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T21:25:11.945370",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T21:26:15.398909",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T21:40:45.901893",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T21:42:16.389400",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T21:55:22.910934",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "file_hash": "48f1e4dea6b9ec8fd1ed77df699358849d648f84ab35488b4d22aefdf7d14d00",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T21:56:26.524119",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "44006b32dfab4098300b7fcbcfebe5ffe08dc42b5ed85eb59c4f2ed44f24b607",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 44,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T22:02:54.161058",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T22:03:53.746991",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T22:10:52.352338",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "file_hash": "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T22:11:45.762162",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 5,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T22:16:50.123151",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "file_hash": "9ec4cb74aad9339f143b3b2c13d74ddd7aa22eac44c29b41c320e7c28b1c9d7b",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T22:17:50.046532",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 11,
+    "col_renames": {}
+  },
+  {
+    "event": "SHEET_LOADED_FROM_CACHE",
+    "timestamp": "2026-04-21T23:15:38.833668",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc"
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T23:18:39.071979",
+    "filename": "Legal_Sample.pdf",
+    "file_hash": "890569c832e58254f08742bcae988b0e7160de87e87d54410c658d0744cce68d",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T23:19:35.272102",
+    "filename": "Legal_Sample.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 10,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T23:20:45.449919",
+    "filename": "messy sample.xlsx",
+    "file_hash": "cccf70c0dfe1396bae5bb61c8717a9818d9c4e4062962690ad3b28b7ce525acd",
+    "sheets": [
+      "Loss Detail 2025",
+      "Loss Detail 2024",
+      "Loss Detail 2023",
+      "Loss Detail 2022"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T23:20:45.937308",
+    "filename": "messy sample.xlsx",
+    "sheet": "Loss Detail 2025",
+    "sheet_hash": "b517575b4ae79315121e0f3a3fdd2b80b6c1c7338353ee44f70af5e89159f4c6",
+    "claim_rows": 8,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 46,
+    "total_cols": 18,
+    "col_renames": {
+      "STATUS": "Status",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "LLM_FIELD_MAP",
+    "timestamp": "2026-04-21T23:20:50.162304",
+    "sheet": "Loss Detail 2025",
+    "schema": "Guidewire",
+    "source_cols": [
+      "FILE NUM",
+      "NAME OF ASSURED",
+      "POL NUM",
+      "DOL",
+      "Status",
+      "HOME",
+      "LOSS PAID THIS MONTH",
+      "LOSS PAID TO DATE",
+      "ADJUSTING COSTS",
+      "ADJUSTING COSTS_2",
+      "TPA COST",
+      "TPA COSTS",
+      "DEFENSE COSTS",
+      "DEFENSE COSTS_2",
+      "OUTSTANDING LOSS",
+      "OUTSTANDING FEE",
+      "OUTSTANDING TPA",
+      "CURRENT RECOVERIES",
+      "Address",
+      "Cause of Loss"
+    ],
+    "mappings": {
+      "FILE NUM": "Claim Number",
+      "NAME OF ASSURED": "Insured Name",
+      "POL NUM": "Policy Number",
+      "DOL": "Loss Date",
+      "Status": "Status",
+      "LOSS PAID TO DATE": "Total Paid",
+      "ADJUSTING COSTS_2": "Reserve",
+      "TPA COSTS": "Expense Paid",
+      "Cause of Loss": "Cause of Loss"
+    }
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T23:23:39.763115",
+    "filename": "Sample_Medical_form.pdf",
+    "file_hash": "9319b082771c3d4aab87424e132434be1436b25606eb223293523fb290516959",
+    "sheets": [
+      "Page 1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T23:24:48.484307",
+    "filename": "Sample_Medical_form.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5d370074196c98703fc391b109338426cec8e4b61041e9a74fd5abff6a600c26",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 14,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T23:32:23.735421",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "file_hash": "48f1e4dea6b9ec8fd1ed77df699358849d648f84ab35488b4d22aefdf7d14d00",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T23:33:32.821829",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "44006b32dfab4098300b7fcbcfebe5ffe08dc42b5ed85eb59c4f2ed44f24b607",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 44,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T23:38:08.824230",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T23:39:06.720479",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T23:43:39.798790",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "file_hash": "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T23:44:28.438183",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 5,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-21T23:50:05.193123",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "file_hash": "9ec4cb74aad9339f143b3b2c13d74ddd7aa22eac44c29b41c320e7c28b1c9d7b",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-21T23:51:11.940034",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 11,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T00:01:11.522895",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "file_hash": "48f1e4dea6b9ec8fd1ed77df699358849d648f84ab35488b4d22aefdf7d14d00",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T00:02:14.556590",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "44006b32dfab4098300b7fcbcfebe5ffe08dc42b5ed85eb59c4f2ed44f24b607",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 44,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T00:04:09.407515",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "file_hash": "48f1e4dea6b9ec8fd1ed77df699358849d648f84ab35488b4d22aefdf7d14d00",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T00:05:20.128958",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "44006b32dfab4098300b7fcbcfebe5ffe08dc42b5ed85eb59c4f2ed44f24b607",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 44,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T00:07:26.476958",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T00:08:25.978716",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T00:10:14.581532",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "file_hash": "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T00:11:07.856139",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 5,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T11:39:57.807005",
+    "filename": "FNOL Sample.pdf",
+    "file_hash": "6528fcf02e1ddff0548657975d8ea4dd3bc454f363e873801fff172a2fbc84be",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T11:40:56.816140",
+    "filename": "FNOL Sample.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "84e7c9bb5dcfbdb659041204c4c59e48b9b7369844e3dd6211b32e04d2b71177",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 21,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T11:45:54.386507",
+    "filename": "Legal_Sample.pdf",
+    "file_hash": "890569c832e58254f08742bcae988b0e7160de87e87d54410c658d0744cce68d",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T11:46:48.012867",
+    "filename": "Legal_Sample.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 10,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T11:52:24.419316",
+    "filename": "Sample_Medical_form.pdf",
+    "file_hash": "9319b082771c3d4aab87424e132434be1436b25606eb223293523fb290516959",
+    "sheets": [
+      "Page 1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T11:53:18.432688",
+    "filename": "Sample_Medical_form.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5d370074196c98703fc391b109338426cec8e4b61041e9a74fd5abff6a600c26",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 14,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T11:55:33.595481",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T11:56:34.737718",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T12:05:51.790873",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "file_hash": "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101",
+    "sheets": [
+      "Sheet1"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T12:05:52.231771",
+    "filename": "Commercial_Auto_Loss_Run.csv",
+    "sheet": "Sheet1",
+    "sheet_hash": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165",
+    "claim_rows": 11,
+    "sheet_type": "LOSS_RUN",
+    "total_rows": 15,
+    "total_cols": 13,
+    "col_renames": {
+      "Date of Loss": "Loss Date",
+      "Date Reported": "Date Reported",
+      "Driver Name": "Claimant Name",
+      "Vehicle ID": "Vehicle ID",
+      "Type of Loss": "Cause of Loss",
+      "At Fault": "At Fault",
+      "Medical Paid": "Medical Paid",
+      "Total Paid": "Total Paid",
+      "Reserve": "Reserve",
+      "Status": "Status"
+    }
+  },
+  {
+    "event": "LLM_CAUSE_ENRICHED",
+    "timestamp": "2026-04-22T12:05:54.577297",
+    "sheet": "Sheet1",
+    "claim_id": "CA-001",
+    "source_fields": [
+      "Loss Date"
+    ],
+    "input_text": "03-08-2021 00:00",
+    "cause_of_loss": "Other",
+    "summary": "The claimant alleges that an incident occurred on March 8, 2021."
   }
 ]

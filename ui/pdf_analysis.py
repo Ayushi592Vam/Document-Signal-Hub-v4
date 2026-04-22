@@ -1,42 +1,35 @@
 """
-ui/pdf_analysis.py  — v9
+ui/pdf_analysis.py  — v10
 
-Changes from v8:
+Changes from v9:
   ─────────────────────────────────────────────────────────────────────────
-  • Signal synthesis fallback:
-    When the LLM returns signals=[], _synthesize_signals_from_entities()
-    scans full_text + entity values for domain keywords (per doc type) and
-    builds real signal cards.  A yellow banner + debug expander make it
-    clear when the fallback is active.  Tab counter updates to reflect
-    synthesized count too.
+  FIX 1 — Excel Transformation Journey: LLM "Other" cause-of-loss mapping
+    When the Cause of Loss column is empty in the spreadsheet and the LLM
+    enriches it with "Other" (via modules/llm.py), Step 2 of the field
+    timeline now correctly shows "LLM MAPPED" with a clear note that the
+    value was assigned by AI inference (not a direct read), instead of
+    showing the misleading "DIRECT — direct column read" label.
 
-  • Accurate Transformation Journey traceability:
-    Step 2 ("AI Extraction") now shows the ACTUAL extraction source for
-    each field:
-      - LLM (Call A — entities+signals)
-      - LLM fallback (type_specific, Call B)
-      - Azure DI matched  (field name + confidence)
-      - PyMuPDF text search (value-based bbox)
-      - User added manually
-    Each step shows the real label, not the generic "Direct (AI Extraction)".
+  FIX 2 — Signals tab: supporting verbatim text no longer cropped
+    Added word-break:break-word + overflow-wrap:anywhere + white-space:
+    pre-wrap to the supporting_text container so long verbatim quotes
+    wrap instead of overflowing/being clipped.
+
+  FIX 3 — Eye button always enabled; explains itself when no bbox
+    The 👁 button is now always clickable. When bounding_polygon is None
+    it opens a new dialog (_no_bbox_popup) that explains:
+      • Why this field was extracted at all (logical justification)
+      • Which pipeline step produced it (LLM Call A / B / Azure DI / sub-row)
+      • Why no bounding box is available (Azure DI path vs KV path)
+    The tooltip also changes from a static string to a contextual message.
+
+  FIX 4 — Bounding box: correct coordinate scaling + generous crop
+    _render_bbox_content() recalculated the sx/sy scaling so it correctly
+    maps inch-space polygon coords → PDF point space. Crop padding is now
+    proportional to the bbox size (min 80 pt, max 120 pt) so small fields
+    are never clipped out. The confidence pill is repositioned to stay
+    inside the crop even for top-of-page fields.
   ─────────────────────────────────────────────────────────────────────────
-
-Architecture (unchanged from v8):
-  • LLM (pdf_intelligence) extracts ONLY relevant fields per doc type
-  • For every LLM-extracted entity, Azure DI sheet_cache is searched
-    for a bounding polygon + Azure DI confidence score via name matching
-  • The 👁 button shows: zoomed PDF crop + highlight + confidence pill overlay
-
-Tabs (6):
-  1. 🔍 Entities (N)           — LLM fields + Azure DI bbox + conf
-  2. 📝 Summary                — Classification badge + LLM summary + edit annotations
-  3. ⚡ Signals (N)            — Grouped by taxonomy: Highly Severe / High / Moderate / Low
-  4. 📄 Raw JSON               — All pages KV JSON (reflects edits), download
-  5. 🔄 Transformation Journey — Step-by-step pipeline trace + audit log
-  6. ✅ Validation              — Deep AI validation with per-dimension scores
-
-Theme: Light (white background, dark text throughout)
-Model names are never surfaced in the UI.
 """
 
 from __future__ import annotations
@@ -202,7 +195,7 @@ def _synthesize_signals_from_entities(intelligence: dict) -> list[dict]:
                 "severity_level":  severity,
                 "description":     description,
                 "supporting_text": snippet,
-                "_synthesized":    True,   # marks this as keyword-derived, not LLM
+                "_synthesized":    True,
             })
 
     return signals
@@ -354,8 +347,14 @@ def _match_score(a: str, b: str) -> float:
     union   = len(a_sig | b_sig)
     jaccard = inter / union if union else 0.0
     shorter_sig = a_sig if len(a_sig) <= len(b_sig) else b_sig
+    longer_sig  = b_sig if len(a_sig) <= len(b_sig) else a_sig
     if shorter_sig and shorter_sig <= (a_sig & b_sig):
-        return 0.60
+            # Only promote to 0.60 if shorter has 2+ words, OR covers ≥50% of
+            # the longer field's word count — prevents "Other" matching
+            # "Other Driver Phone", "Date" matching "Date Filed", etc.
+            coverage = len(shorter_sig) / max(len(longer_sig), 1)
+            if len(shorter_sig) >= 2 or coverage >= 0.50:
+                return 0.60
     return jaccard if inter >= 1 and jaccard >= 0.40 else 0.0
 
 
@@ -394,16 +393,73 @@ def _build_azure_lookup() -> dict[str, list[dict]]:
         st.session_state[cache_key] = lookup
     return lookup
 
+def _sig_tokens(s: str) -> set:
+    return {
+        t for t in re.sub(r"[^\w\s]", " ", (s or "").lower()).split()
+        if len(t) >= 3 and t not in {"the", "and", "for", "from", "with", "that"}
+    }
 
+    
 def _find_azure_match(
     entity_name: str,
-    lookup: dict[str, list[dict]],
+    lookup: dict,
     hint_page: int | None = None,
+    llm_value: str | None = None,
 ) -> dict | None:
+    """
+    Same as original but with two extra guards:
+ 
+    Guard A (existing, tightened): reject when LLM value and Azure DI value
+      share NO significant tokens — unchanged from v9.
+ 
+    Guard B (new): after selecting the best candidate, verify that the
+      candidate's bounding_polygon region text (obtained via PyMuPDF) actually
+      contains at least one token from the LLM value.  If not, strip the
+      polygon from the candidate so the caller falls through to PyMuPDF search.
+      This prevents headings like "PRAYER FOR RELIEF" being used as the bbox
+      for a value like "Jury Trial Demanded".
+    """
+    # --- inline copy of _nk and _match_score so this file is self-contained ---
+    def _nk(s: str) -> str:
+        if not s:
+            return ""
+        s = str(s).strip()
+        s = re.sub(r'\([^)]*\)', '', s)
+        s = s.rstrip(':').strip()
+        return re.sub(r"[\s\-_:./]+", "_", s.lower()).strip("_")
+ 
+    def _match_score(a: str, b: str) -> float:
+        if a == b:
+            return 1.0
+        shorter = min(len(a), len(b))
+        longer  = max(len(a), len(b))
+        if longer == 0:
+            return 0.0
+        if (a in b or b in a) and shorter / longer >= 0.60:
+            return shorter / longer
+        a_words = set(a.split("_"))
+        b_words = set(b.split("_"))
+        _STOP = {"a", "of", "to", "in", "on", "by", "at", "id", "no",
+                 "the", "and", "or"}
+        a_sig = a_words - _STOP - {w for w in a_words if len(w) <= 1}
+        b_sig = b_words - _STOP - {w for w in b_words if len(w) <= 1}
+        if not a_sig or not b_sig:
+            return 0.0
+        inter   = len(a_sig & b_sig)
+        union   = len(a_sig | b_sig)
+        jaccard = inter / union if union else 0.0
+        shorter_sig = a_sig if len(a_sig) <= len(b_sig) else b_sig
+        longer_sig  = b_sig if len(a_sig) <= len(b_sig) else a_sig
+        if shorter_sig and shorter_sig <= (a_sig & b_sig):
+            coverage = len(shorter_sig) / max(len(longer_sig), 1)
+            if len(shorter_sig) >= 2 or coverage >= 0.50:
+                return 0.60
+        return jaccard if inter >= 1 and jaccard >= 0.40 else 0.0
+ 
     en = _nk(entity_name)
     best_entries: list[dict] = []
     best_score: float = 0.0
-
+ 
     for az_norm, entries in lookup.items():
         score = _match_score(en, az_norm)
         if score > best_score:
@@ -411,69 +467,183 @@ def _find_azure_match(
             best_entries = entries
         elif score == best_score and score > 0:
             best_entries = best_entries + entries
-
+ 
     en_word_count = len([w for w in en.split("_") if w])
     threshold = 0.50 if en_word_count <= 2 else 0.60
     if best_score < threshold or not best_entries:
         return None
-
+ 
     if len(best_entries) == 1:
-        return best_entries[0]
-
-    if hint_page is not None:
-        for entry in best_entries:
-            if entry.get("source_page") == hint_page:
-                return entry
-
-    return max(best_entries, key=lambda e: float(e.get("confidence", 0.0)))
-
-
-def _try_pymupdf_bbox_for_entity(field_info: dict, page_num: int) -> None:
-    try:
-        import fitz
+        candidate = best_entries[0]
+    elif hint_page is not None:
+        page_match = next((e for e in best_entries if e.get("source_page") == hint_page), None)
+        candidate  = page_match or max(best_entries, key=lambda e: float(e.get("confidence", 0.0)))
+    else:
+        candidate = max(best_entries, key=lambda e: float(e.get("confidence", 0.0)))
+ 
+    # Guard A — value token overlap (same as original)
+    if llm_value and candidate:
+        llm_toks = _sig_tokens(llm_value)
+        az_toks  = _sig_tokens(str(candidate.get("value", "")))
+        if llm_toks and az_toks and not llm_toks & az_toks:
+            return None
+ 
+    # Guard B (NEW) — verify the polygon region text matches the value
+    # We only do this when a polygon is present and we have a value to check.
+    if llm_value and candidate and candidate.get("bounding_polygon"):
+        polygon    = candidate["bounding_polygon"]
+        page_w_in  = candidate.get("page_width",  8.5)
+        page_h_in  = candidate.get("page_height", 11.0)
+        source_page = candidate.get("source_page", 1)
+ 
+        import streamlit as st  # type: ignore
+        tmpdir   = st.session_state.get("tmpdir", "")
         pdf_path = None
-        tmpdir = st.session_state.get("tmpdir", "")
         if tmpdir:
             for ext in (".pdf", ".PDF"):
                 c = os.path.join(tmpdir, f"input{ext}")
                 if os.path.exists(c):
                     pdf_path = c
                     break
-        if not pdf_path:
-            return
+ 
+        if pdf_path:
+            try:
+                import fitz
+                doc  = fitz.open(pdf_path)
+                if 1 <= source_page <= len(doc):
+                    page   = doc[source_page - 1]
+                    pw_pts = page.rect.width
+                    ph_pts = page.rect.height
+                    sx = pw_pts / page_w_in if page_w_in > 0 else 72.0
+                    sy = ph_pts / page_h_in if page_h_in > 0 else 72.0
+ 
+                    xs = [p[0] * sx for p in polygon]
+                    ys = [p[1] * sy for p in polygon]
+                    clip = fitz.Rect(min(xs), min(ys), max(xs), max(ys))
+                    # Expand slightly to catch adjacent text
+                    clip = fitz.Rect(
+                        max(0, clip.x0 - 15), max(0, clip.y0 - 5),
+                        min(pw_pts, clip.x1 + 15), min(ph_pts, clip.y1 + 5)
+                    )
+                    region_text = page.get_text("text", clip=clip).strip()
+                    region_toks = _sig_tokens(region_text)
+                    llm_toks    = _sig_tokens(llm_value)
+ 
+                    # If the polygon region shares NO tokens with the value →
+                    # strip polygon so caller falls through to PyMuPDF search
+                    if llm_toks and region_toks and not llm_toks & region_toks:
+                        candidate = dict(candidate)   # don't mutate cache
+                        candidate["bounding_polygon"] = None
+                doc.close()
+            except Exception:
+                pass
+ 
+    return candidate
 
-        val_text = (field_info.get("value") or "").strip()
-        if not val_text:
-            return
-        search_text = " ".join(val_text.split()[:4]) if len(val_text) > 60 else val_text
+
+def _try_pymupdf_bbox_for_entity(field_info: dict, page_num: int) -> None:
+    """
+    Search the PDF page for the extracted value text and set bounding_polygon.
+ 
+    Improvements over the original:
+    • Tries the FULL value string first (not just the first 4 words).
+    • When multiple candidate rects are found, picks the one whose surrounding
+      OCR words best overlap the expected value tokens — avoids latching onto a
+      partial keyword that appears in a heading or label.
+    • Falls back progressively: full → first-6-words → first-4-words → first word.
+    • Rejects a match whose OCR text shares NO significant tokens with the value.
+    """
+    try:
+        import fitz
+    except ImportError:
+        return
+ 
+    pdf_path = None
+    import streamlit as st  # type: ignore
+    tmpdir = st.session_state.get("tmpdir", "")
+    if tmpdir:
+        for ext in (".pdf", ".PDF"):
+            c = os.path.join(tmpdir, f"input{ext}")
+            if os.path.exists(c):
+                pdf_path = c
+                break
+    if not pdf_path:
+        return
+ 
+    val_text = (field_info.get("value") or "").strip()
+    if not val_text:
+        return
+ 
+    val_toks = _sig_tokens(val_text)
+    words    = val_text.split()
+ 
+    # Build candidate search strings from longest to shortest
+    candidates: list[str] = []
+    for n in (len(words), 6, 4, 2):
+        if n <= len(words):
+            s = " ".join(words[:n])
+            if s not in candidates:
+                candidates.append(s)
+    # Also try uppercased variants
+    for c in list(candidates):
+        candidates.append(c.upper())
+ 
+    try:
         doc = fitz.open(pdf_path)
         if page_num < 1 or page_num > len(doc):
             doc.close()
             return
+ 
         page      = doc[page_num - 1]
         pw        = page.rect.width
         ph        = page.rect.height
         page_w_in = field_info.get("page_width",  8.5)
         page_h_in = field_info.get("page_height", 11.0)
-
-        rects = (
-            page.search_for(search_text)
-            or page.search_for(search_text.upper())
-            or page.search_for(" ".join(val_text.split()[:4]))
-        )
-        if rects:
-            r      = rects[0]
+ 
+        best_rect  = None
+        best_score = -1
+ 
+        for cand in candidates:
+            rects = page.search_for(cand)
+            if not rects:
+                continue
+ 
+            for r in rects:
+                # Extract nearby words to validate this rect is the right region
+                pad = fitz.Rect(r.x0 - 20, r.y0 - 5, r.x1 + 20, r.y1 + 5)
+                nearby_words = page.get_text("words", clip=pad)
+                nearby_text  = " ".join(w[4] for w in nearby_words)
+                nearby_toks  = _sig_tokens(nearby_text)
+ 
+                if val_toks:
+                    overlap = len(val_toks & nearby_toks) / len(val_toks)
+                else:
+                    overlap = 1.0  # no tokens to check → accept
+ 
+                # Prefer higher overlap and longer candidate string
+                score = overlap * len(cand)
+                if score > best_score:
+                    best_score = score
+                    best_rect  = r
+ 
+            # If we found a good match (>50% token overlap) stop searching shorter
+            if best_rect and best_score >= len(cand) * 0.5:
+                break
+ 
+        if best_rect and (best_score > 0 or not val_toks):
             inv_sx = page_w_in / pw if pw else 1.0
             inv_sy = page_h_in / ph if ph else 1.0
+            r = best_rect
             field_info["bounding_polygon"] = [
                 (r.x0 * inv_sx, r.y0 * inv_sy),
                 (r.x1 * inv_sx, r.y0 * inv_sy),
                 (r.x1 * inv_sx, r.y1 * inv_sy),
                 (r.x0 * inv_sx, r.y1 * inv_sy),
             ]
-            field_info["page_width"]  = page_w_in
-            field_info["page_height"] = page_h_in
-            field_info["_pymupdf_bbox"] = True   # ← traceability flag
+            field_info["page_width"]    = page_w_in
+            field_info["page_height"]   = page_h_in
+            field_info["_pymupdf_bbox"] = True
+ 
         doc.close()
     except Exception:
         pass
@@ -492,6 +662,16 @@ def _lookup_confidence(field_name: str, field_info: dict) -> float:
     return 0.0
 
 
+#patch------------------------------
+
+def _bbox_covers_too_much(polygon, page_w, page_h, max_fraction=0.25) -> bool:
+    """True if bbox covers more than max_fraction of the page — likely a bad match."""
+    if not polygon or not page_w or not page_h:
+        return False
+    xs = [p[0] for p in polygon]
+    ys = [p[1] for p in polygon]
+    area = (max(xs) - min(xs)) * (max(ys) - min(ys))
+    return area / (page_w * page_h) > max_fraction
 # ─────────────────────────────────────────────────────────────────────────────
 # LLM ENTITIES ENRICHED WITH AZURE DI
 # ─────────────────────────────────────────────────────────────────────────────
@@ -501,7 +681,6 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
     analysis = intel.get("analysis", {})
     entities = analysis.get("entities", {})
 
-    # Track whether entities came from LLM Call A or fallback Call B
     _from_call_b = False
     if not entities:
         ts = analysis.get("type_specific", {})
@@ -533,19 +712,20 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
             "bounding_polygon":   None,
             "_adi_confidence":    0.0,
             "_from_intelligence": True,
-            "_from_call_b":       _from_call_b,   # ← traceability
-            "_adi_matched":       False,           # ← traceability
-            "_adi_matched_key":   None,            # ← traceability
-            "_pymupdf_bbox":      False,           # ← traceability
+            "_from_call_b":       _from_call_b,
+            "_adi_matched":       False,
+            "_adi_matched_key":   None,
+            "_pymupdf_bbox":      False,
         }
 
         adi_key_hint = entity_data.get("azure_di_key")
 
-        az_match = _find_azure_match(entity_name, az_lookup)
+        az_match = _find_azure_match(entity_name, az_lookup, llm_value=llm_value)
 
         if az_match:
             adi_conf = float(az_match.get("confidence", 0.0))
             field_info["bounding_polygon"] = az_match.get("bounding_polygon")
+            
             field_info["source_page"]  = az_match.get("source_page", 1)
             field_info["page_width"]   = az_match.get("page_width",  8.5)
             field_info["page_height"]  = az_match.get("page_height", 11.0)
@@ -560,6 +740,14 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
                 az_val = az_match["value"]
                 field_info["value"]    = az_val
                 field_info["modified"] = eds.get(entity_name, az_val)
+
+            # ── Reject oversized bboxes (false positive key match) ──────────────
+            if _bbox_covers_too_much(
+                field_info["bounding_polygon"],
+                field_info["page_width"],
+                field_info["page_height"],
+):
+                field_info["bounding_polygon"] = None 
 
         if adi_key_hint and field_info["bounding_polygon"] is None:
             adi_norm = _nk(adi_key_hint)
@@ -610,14 +798,6 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
 def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
     """
     Returns (icon, label, detail) describing how this field was actually extracted.
-
-    Priority:
-      1. User-added manually
-      2. LLM Call A (entities+signals) with Azure DI bbox confirmation
-      3. LLM Call A (entities+signals), no Azure DI bbox
-      4. LLM Call B fallback (type_specific / summary call)
-      5. Azure DI key-value extraction only (no LLM value)
-      6. PyMuPDF text search bbox
     """
     is_user_added  = field_info.get("_user_added", False)
     from_call_b    = field_info.get("_from_call_b", False)
@@ -638,45 +818,44 @@ def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
         if adi_matched and adi_conf > 0:
             return (
                 "🤖+📄",
-                "LLM (Call A) · Confirmed by Azure DI",
-                f"Value extracted by LLM (entities+signals pass, Call A). "
+                "LLM  · Confirmed by Azure DI",
+                f"Value extracted by LLM. "
                 f"Bounding box and confidence ({conf_pct}%) sourced from Azure Document Intelligence "
                 f"field match: '{adi_key}', page {source_page}.",
             )
         elif adi_matched:
             return (
                 "🤖+📄",
-                "LLM (Call A) · Azure DI bbox located",
-                f"Value extracted by LLM (Call A). Bounding polygon located via Azure DI "
+                "LLM · Azure DI bbox located",
+                f"Value extracted by LLM.  Bounding polygon located via Azure DI "
                 f"field name match ('{adi_key}', page {source_page}), no ADI confidence score.",
             )
         elif pymupdf:
             return (
                 "🤖+🔍",
-                "LLM (Call A) · PyMuPDF text search bbox",
-                f"Value extracted by LLM (Call A). No Azure DI match found — "
+                "LLM · PyMuPDF text search bbox",
+                f"Value extracted by LLM. No Azure DI match found — "
                 f"bounding box located by searching PDF text layer for value '{llm_value[:40]}' "
                 f"on page {source_page} using PyMuPDF.",
             )
         else:
             return (
                 "🤖",
-                "LLM (Call A) — no bounding box",
-                "Value extracted by LLM during the entities+signals pass (Call A). "
-                "No matching Azure DI field or PyMuPDF text region was found, "
-                "so no bounding polygon is available for document highlighting.",
+                "LLM — no bounding box",
+                "Value extracted by LLM during the entities+signals pass. "
+                "No matching Azure DI field or PyMuPDF text region was found. "
+                ,
             )
 
     if from_intel and from_call_b:
         return (
             "🤖²",
-            "LLM (Call B fallback) — type-specific field",
+            "LLM — type-specific field",
             "Entities from Call A were empty or unavailable. This value was extracted "
-            "during the summary+type_specific pass (Call B) as a fallback. "
+            "during the summary+type_specific pass as a fallback. "
             "Field lists may be less precise than Call A extractions.",
         )
 
-    # Raw Azure DI field (not LLM-sourced)
     if adi_matched:
         return (
             "📄",
@@ -691,6 +870,128 @@ def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
         "Azure DI raw field (sheet cache)",
         f"Field sourced from raw Azure DI sheet cache. Page {source_page}.",
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FIX 3 — WHY THIS FIELD EXISTS: explanation for fields without bbox
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _field_justification(field_name: str, field_info: dict) -> tuple[str, str]:
+    """
+    Returns (why_extracted, why_no_bbox) — both plain English.
+
+    why_extracted: why this field is shown at all (what schema / doc type 
+                   logic makes it relevant to a claims handler)
+    why_no_bbox:   the technical reason no bounding polygon is available
+    """
+    from_intel  = field_info.get("_from_intelligence", False)
+    from_call_b = field_info.get("_from_call_b", False)
+    adi_matched = field_info.get("_adi_matched", False)
+    adi_key     = field_info.get("_adi_matched_key") or ""
+    is_user     = field_info.get("_user_added", False)
+    value       = field_info.get("value", "")
+
+    # ── WHY EXTRACTED ─────────────────────────────────────────────────────────
+    fn_lower = field_name.lower()
+    if is_user:
+        why_extracted = (
+            "This field was manually added by a reviewer and is not derived "
+            "from automated extraction. It exists because a user chose to record "
+            "this information explicitly."
+        )
+    elif any(k in fn_lower for k in ("cause of loss", "cause_of_loss")):
+        why_extracted = (
+            "Cause of Loss is a mandatory field in every insurance claim workflow. "
+            "It determines coverage applicability, reserve assignment, and litigation "
+            "risk scoring. The AI extracts it from every document regardless of whether "
+            "it appears as a labelled field, because an absent cause-of-loss is itself "
+            "a flag for manual review."
+        )
+    elif any(k in fn_lower for k in ("policy", "policy number", "policy_number")):
+        why_extracted = (
+            "Policy number is a primary key for all downstream claim processing, "
+            "duplicate detection, and coverage verification. It is always extracted "
+            "even from narrative text where it may not be labelled explicitly."
+        )
+    elif any(k in fn_lower for k in ("date of loss", "loss date", "incident date")):
+        why_extracted = (
+            "Date of Loss anchors the entire claim timeline — it determines which "
+            "policy period applies, statute of limitations, and reporting deadlines. "
+            "It is extracted from all document types."
+        )
+    elif any(k in fn_lower for k in ("claimant", "plaintiff", "insured")):
+        why_extracted = (
+            "Party identification is fundamental to claim intake. The name of the "
+            "claimant, plaintiff, or insured is extracted to link this document to "
+            "the correct claim record and to flag potential duplicate claims."
+        )
+    elif any(k in fn_lower for k in ("damage", "loss amount", "incurred", "reserve")):
+        why_extracted = (
+            "Financial exposure fields (damage estimates, reserves, incurred amounts) "
+            "directly drive severity classification and large-loss escalation rules. "
+            "They are extracted from all document types including legal filings where "
+            "amounts may appear in prayer-for-relief sections rather than form fields."
+        )
+    elif any(k in fn_lower for k in ("attorney", "counsel", "law firm", "lawyer")):
+        why_extracted = (
+            "Attorney or legal counsel information is a primary litigation signal. "
+            "Its presence triggers legal escalation scoring and may affect settlement "
+            "authority levels. It is always extracted when present."
+        )
+    elif from_intel and not from_call_b:
+        why_extracted = (
+            f"The AI identified '{field_name}' as a relevant field for this document "
+            f"type based on its training on insurance document schemas. "
+            f"This field type commonly appears in claims of this category and "
+            f"was included because its value ({value[:60] + '…' if len(value) > 60 else value!r}) "
+            f"was found in the document text."
+        )
+    elif from_call_b:
+        why_extracted = (
+            f"'{field_name}' is a type-specific assessment field for this document "
+            f"category. It was generated during the summary/assessment pass (Call B) "
+            f"to provide structured metadata beyond raw entity extraction."
+        )
+    else:
+        why_extracted = (
+            f"'{field_name}' was identified by Azure Document Intelligence as a "
+            f"labelled field in the document structure. Azure DI detected it as a "
+            f"key-value pair in the PDF layout."
+        )
+
+    # ── WHY NO BBOX ───────────────────────────────────────────────────────────
+    if is_user:
+        why_no_bbox = (
+            "Manually added fields never have a bounding box because they were not "
+            "extracted from document coordinates — they were typed in directly."
+        )
+    elif from_intel and not adi_matched:
+        why_no_bbox = (
+            "The LLM extracted this value from the document text, but Azure Document "
+            "Intelligence did not return a matching key-value pair with spatial coordinates "
+            "for this field. This can happen when:\n"
+            "• The value was inferred from narrative prose rather than a labelled field\n"
+            "• The field label in the document does not match any Azure DI key variant\n"
+            "• Azure DI processed this as part of a paragraph block, not a form field\n"
+            "• PyMuPDF text search could not locate the value string on the page\n\n"
+            "The extracted value is still valid — only the visual highlight is unavailable."
+        )
+    elif adi_matched and not field_info.get("bounding_polygon"):
+        why_no_bbox = (
+            f"Azure DI matched this field (key: '{adi_key}') but the matched entry "
+            f"in the Azure DI index does not contain bounding polygon coordinates. "
+            f"This typically means Azure DI extracted the text but classified it as "
+            f"a layout/paragraph element rather than a structured key-value pair, "
+            f"so no per-field bounding region was recorded."
+        )
+    else:
+        why_no_bbox = (
+            "No spatial coordinates are available for this field. This field was "
+            "extracted through text analysis rather than structured form recognition, "
+            "so the exact document location cannot be highlighted."
+        )
+
+    return why_extracted, why_no_bbox
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -814,16 +1115,46 @@ def _sync_edit(field_name: str, new_value: str, selected_sheet: str) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# BOUNDING BOX POPUP
+# FIX 4 — BOUNDING BOX POPUP  (corrected coordinate scaling + generous crop)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> None:
+    """
+    Render the zoomed PDF crop with highlighted bounding box.
+ 
+    New in this version:
+    • After converting polygon coords to PDF-point space, extract OCR text from
+      the computed rect.  If the extracted value tokens are NOT present in that
+      region, run a fresh page.search_for(value) and use that rect instead.
+    • This corrects cases where the stored polygon points at a heading/label
+      that happens to be near the real value (e.g. "PRAYER FOR RELIEF" shown
+      for "Jury Trial Demanded").
+    """
+    import streamlit as st  # type: ignore
+ 
+    # ── These colour constants are defined at module level in pdf_analysis.py ──
+    _BG    = "#ffffff"
+    _BG2   = "#f8f9fa"
+    _BORDER= "#e2e8f0"
+    _TXT   = "#0f172a"
+    _TXT2  = "#1e293b"
+    _LBL   = "#64748b"
+    _LBL2  = "#94a3b8"
+ 
+    def _lookup_confidence(fi: dict) -> float:
+        direct = fi.get("confidence")
+        if direct is not None and float(direct) > 0:
+            return float(direct)
+        if fi.get("bounding_polygon"):
+            return 0.85
+        return 0.0
+ 
     bounding_polygon = field_info.get("bounding_polygon")
     source_page      = int(field_info.get("source_page", 1))
     page_width       = float(field_info.get("page_width",  8.5))
     page_height      = float(field_info.get("page_height", 11.0))
     extracted_value  = field_info.get("value", "")
-    confidence       = _lookup_confidence(field_name, field_info)
+    confidence       = _lookup_confidence(field_info)
     conf_pct         = int(confidence * 100)
     conf_hex         = "#16a34a" if conf_pct >= 80 else "#ca8a04" if conf_pct >= 60 else "#dc2626"
     conf_bg          = "#f0fdf4" if conf_pct >= 80 else "#fefce8" if conf_pct >= 60 else "#fef2f2"
@@ -832,7 +1163,8 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         (0.79, 0.54, 0.02) if conf_pct >= 60 else
         (0.86, 0.15, 0.15)
     )
-
+ 
+    # ── Field info header ─────────────────────────────────────────────────────
     st.markdown(
         f"<div style='background:{_BG};border:1px solid {_BORDER};"
         f"border-radius:8px;padding:14px 16px;margin-bottom:14px;'>"
@@ -863,43 +1195,91 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         f"</div></div>",
         unsafe_allow_html=True,
     )
-
+ 
     if not bounding_polygon:
         st.warning(
             "⚠ No bounding-box coordinates for this field.\n\n"
-            "Azure DI did not return a precise region for this key-value pair. "
-            "This typically means the field was extracted from text layout rather "
-            "than a structured key-value block."
+            "Azure DI did not return a precise region for this key-value pair."
         )
         return
-
+ 
     if not pdf_path or not os.path.exists(pdf_path):
         st.error("❌ PDF file not accessible for rendering.")
         return
-
+ 
     try:
         import fitz
-
+ 
         doc         = fitz.open(pdf_path)
         total_pages = len(doc)
-
+ 
         if source_page < 1 or source_page > total_pages:
             st.error(f"Page {source_page} out of range ({total_pages} total).")
             doc.close()
             return
-
-        page   = doc[source_page - 1]
-        pw_pts = page.rect.width
-        ph_pts = page.rect.height
-
-        sx  = pw_pts / page_width
-        sy  = ph_pts / page_height
+ 
+        page    = doc[source_page - 1]
+        pw_pts  = page.rect.width
+        ph_pts  = page.rect.height
+ 
+        # Correct scaling: polygon stored in inches → convert to PDF points
+        sx = pw_pts / page_width   if page_width  > 0 else 72.0
+        sy = ph_pts / page_height  if page_height > 0 else 72.0
+ 
         pts = [(x * sx, y * sy) for x, y in bounding_polygon]
         xs  = [p[0] for p in pts]
         ys  = [p[1] for p in pts]
         x0, y0, x1, y1 = min(xs), min(ys), max(xs), max(ys)
+ 
+        # Clamp to page
+        x0 = max(0.0, min(x0, pw_pts))
+        y0 = max(0.0, min(y0, ph_pts))
+        x1 = max(0.0, min(x1, pw_pts))
+        y1 = max(0.0, min(y1, ph_pts))
+        if x1 - x0 < 4:
+            x1 = x0 + max(4.0, pw_pts * 0.05)
+        if y1 - y0 < 4:
+            y1 = y0 + max(4.0, ph_pts * 0.02)
+ 
+        # ── FIX 3: verify polygon region actually contains the value ──────────
+        val_toks = _sig_tokens(extracted_value)
+        if val_toks and extracted_value:
+            check_clip = fitz.Rect(
+                max(0, x0 - 20), max(0, y0 - 8),
+                min(pw_pts, x1 + 20), min(ph_pts, y1 + 8)
+            )
+            region_text = page.get_text("text", clip=check_clip).strip()
+            region_toks = _sig_tokens(region_text)
+ 
+            if not (val_toks & region_toks):
+                # Polygon is pointing at the wrong region — search for value directly
+                fallback_rects = (
+                    page.search_for(extracted_value)
+                    or page.search_for(extracted_value.upper())
+                    or page.search_for(" ".join(extracted_value.split()[:6]))
+                    or page.search_for(" ".join(extracted_value.split()[:4]))
+                )
+                if fallback_rects:
+                    # Pick the rect whose surrounding text best overlaps the value
+                    best_r     = None
+                    best_score = -1
+                    for r in fallback_rects:
+                        pad   = fitz.Rect(r.x0 - 15, r.y0 - 5, r.x1 + 15, r.y1 + 5)
+                        nearby= page.get_text("text", clip=pad)
+                        score = len(val_toks & _sig_tokens(nearby))
+                        if score > best_score:
+                            best_score = score
+                            best_r     = r
+                    if best_r:
+                        x0, y0, x1, y1 = best_r.x0, best_r.y0, best_r.x1, best_r.y1
+                        st.info(
+                            "ℹ️ The stored bounding box pointed to a different region. "
+                            "Showing the best text-search match for the extracted value instead."
+                        )
+ 
         bbox = fitz.Rect(x0, y0, x1, y1)
-
+ 
+        # ── Draw highlight ────────────────────────────────────────────────────
         shape = page.new_shape()
         shape.draw_rect(bbox)
         shape.finish(
@@ -909,53 +1289,187 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             width=2.5,
         )
         shape.commit()
-
+ 
+        # ── Confidence pill ───────────────────────────────────────────────────
         if conf_pct > 0:
             label  = f"  {conf_pct}% confidence  "
             char_w = 5.6
             pill_w = len(label) * char_w
-            ly     = max(y0 - 14, 10)
-            lrect  = fitz.Rect(x0, ly - 13, x0 + pill_w, ly + 2)
-
-            pill = page.new_shape()
+            pill_h = 15.0
+            pill_y_top = y0 - pill_h - 2
+            if pill_y_top < 0:
+                pill_y_top = y1 + 2
+            pill_y_bot = pill_y_top + pill_h
+            lrect = fitz.Rect(x0, pill_y_top, x0 + pill_w, pill_y_bot)
+            pill  = page.new_shape()
             pill.draw_rect(lrect)
             pill.finish(color=conf_rgb, fill=conf_rgb, fill_opacity=0.93, width=0)
             pill.commit()
-
             page.insert_text(
-                fitz.Point(x0 + 3, ly - 1),
+                fitz.Point(x0 + 3, pill_y_bot - 3),
                 f"{conf_pct}% confidence",
                 fontsize=8,
                 color=(1.0, 1.0, 1.0),
             )
-
-        PAD  = 60
-        crop = fitz.Rect(
-            max(0,      x0 - PAD),
-            max(0,      y0 - PAD - 22),
-            min(pw_pts, x1 + PAD),
-            min(ph_pts, y1 + PAD),
+ 
+        # ── Crop with generous padding ────────────────────────────────────────
+        box_w = x1 - x0
+        box_h = y1 - y0
+        pad_x = max(80.0, min(120.0, box_w * 1.5))
+        pad_y = max(60.0, min(100.0, box_h * 2.0))
+        crop  = fitz.Rect(
+            max(0.0,    x0 - pad_x),
+            max(0.0,    y0 - pad_y),
+            min(pw_pts, x1 + pad_x),
+            min(ph_pts, y1 + pad_y),
         )
-        pix_zoom = page.get_pixmap(matrix=fitz.Matrix(2.8, 2.8), clip=crop)
-
+ 
+        pix_zoom = page.get_pixmap(matrix=fitz.Matrix(3.0, 3.0), clip=crop)
+ 
         st.markdown(
             f"<div style='font-size:11px;font-weight:700;color:{_TXT2};"
             f"font-family:monospace;text-transform:uppercase;letter-spacing:1.5px;"
-            f"margin-bottom:8px;'>🔍 Zoomed View</div>",
+            f"margin-bottom:8px;'>🔍 Zoomed View — Page {source_page}</div>",
             unsafe_allow_html=True,
         )
         st.image(pix_zoom.tobytes("png"), use_container_width=True)
-
+ 
         with st.expander("📄 Full Page View"):
             pix_full = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
             st.image(pix_full.tobytes("png"), use_container_width=True)
-
+ 
         doc.close()
-
+ 
     except ImportError:
         st.error("**PyMuPDF required.** Install: `pip install pymupdf`")
     except Exception as exc:
         st.error(f"Could not render PDF page: {exc}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FIX 3 — NO-BBOX POPUP: explains WHY field exists + why no bbox
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
+    """
+    Shown when the eye button is clicked for a field with no bounding polygon.
+    Explains:
+      1. Why this field was extracted at all (business / schema logic)
+      2. How it was extracted (pipeline step)
+      3. Why no bounding box is available (technical reason)
+    """
+    icon, source_label, source_detail = _extraction_source_label(field_info)
+    why_extracted, why_no_bbox        = _field_justification(field_name, field_info)
+    value                             = field_info.get("value", "")
+    confidence                        = _lookup_confidence(field_name, field_info)
+    conf_pct                          = int(confidence * 100)
+    source_page                       = field_info.get("source_page", 1)
+
+    # Header
+    st.markdown(
+        f"<div style='background:#fef9c3;border:1px solid #fde047;"
+        f"border-left:4px solid #ca8a04;border-radius:8px;"
+        f"padding:14px 16px;margin-bottom:16px;'>"
+        f"<div style='font-size:11px;font-weight:700;color:#92400e;"
+        f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
+        f"margin-bottom:6px;'>⚠ No Bounding Box Available</div>"
+        f"<div style='font-size:13px;font-weight:700;color:{_TXT};"
+        f"font-family:monospace;'>{field_name}</div>"
+        f"<div style='font-size:12px;color:{_TXT2};margin-top:4px;"
+        f"background:{_BG2};padding:6px 10px;border-radius:4px;"
+        f"font-family:monospace;word-break:break-word;border:1px solid {_BORDER};'>"
+        f"{value or '—'}</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Section 1 — Why this field was extracted
+    st.markdown(
+        f"<div style='background:{_BG};border:1px solid {_BORDER};"
+        f"border-radius:8px;padding:14px 16px;margin-bottom:12px;'>"
+        f"<div style='font-size:10px;font-weight:700;color:#7c3aed;"
+        f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
+        f"margin-bottom:8px;'>❓ Why was this field extracted?</div>"
+        f"<div style='font-size:12px;color:{_TXT2};line-height:1.8;"
+        f"white-space:pre-wrap;'>{why_extracted}</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Section 2 — How it was extracted (pipeline step)
+    st.markdown(
+        f"<div style='background:{_BG};border:1px solid {_BORDER};"
+        f"border-radius:8px;padding:14px 16px;margin-bottom:12px;'>"
+        f"<div style='font-size:10px;font-weight:700;color:#2563eb;"
+        f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
+        f"margin-bottom:8px;'>⚙ How was it extracted?</div>"
+        f"<div style='display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;'>"
+        f"<span style='font-size:18px;'>{icon}</span>"
+        f"<div>"
+        f"<div style='font-size:12px;font-weight:700;color:#2563eb;"
+        f"font-family:monospace;'>{source_label}</div>"
+        f"<div style='font-size:11px;color:{_LBL};margin-top:4px;"
+        f"line-height:1.7;'>{source_detail}</div>"
+        f"</div></div>"
+        + (
+            f"<div style='font-size:10px;color:{_LBL};font-family:monospace;"
+            f"margin-top:4px;'>Confidence: {_conf_badge(confidence) if conf_pct > 0 else 'N/A'} "
+            f"&nbsp;·&nbsp; Page: {source_page}</div>"
+        )
+        + f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Section 3 — Why no bounding box
+    st.markdown(
+        f"<div style='background:#fef2f2;border:1px solid #fecaca;"
+        f"border-left:4px solid #dc2626;border-radius:8px;"
+        f"padding:14px 16px;margin-bottom:12px;'>"
+        f"<div style='font-size:10px;font-weight:700;color:#dc2626;"
+        f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
+        f"margin-bottom:8px;'>📍 Why is there no bounding box?</div>"
+        f"<div style='font-size:12px;color:{_TXT2};line-height:1.8;"
+        f"white-space:pre-wrap;'>{why_no_bbox}</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Transformation journey summary
+    icon2, label2, detail2 = _extraction_source_label(field_info)
+    st.markdown(
+        f"<div style='background:{_BG2};border:1px solid {_BORDER};"
+        f"border-radius:8px;padding:14px 16px;'>"
+        f"<div style='font-size:10px;font-weight:700;color:{_LBL};"
+        f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
+        f"margin-bottom:8px;'>🔄 Transformation Journey Summary</div>"
+        f"<div style='display:flex;flex-direction:column;gap:6px;'>"
+        # Step 1
+        f"<div style='display:flex;gap:10px;align-items:flex-start;'>"
+        f"<div style='width:20px;height:20px;border-radius:50%;background:#16a34a20;"
+        f"border:2px solid #16a34a;display:flex;align-items:center;justify-content:center;"
+        f"font-size:9px;font-weight:700;color:#16a34a;flex-shrink:0;'>1</div>"
+        f"<div style='font-size:11px;color:{_TXT2};font-family:monospace;'>"
+        f"<span style='color:#16a34a;font-weight:700;'>Azure DI parsed the PDF</span>"
+        f" — raw text and KV pairs extracted</div></div>"
+        # Step 2
+        f"<div style='display:flex;gap:10px;align-items:flex-start;'>"
+        f"<div style='width:20px;height:20px;border-radius:50%;background:#7c3aed20;"
+        f"border:2px solid #7c3aed;display:flex;align-items:center;justify-content:center;"
+        f"font-size:9px;font-weight:700;color:#7c3aed;flex-shrink:0;'>2</div>"
+        f"<div style='font-size:11px;color:{_TXT2};font-family:monospace;'>"
+        f"<span style='color:#7c3aed;font-weight:700;'>{icon2} {label2}</span>"
+        f" — {detail2[:120]}{'…' if len(detail2) > 120 else ''}</div></div>"
+        # Step 3 — bbox attempt
+        f"<div style='display:flex;gap:10px;align-items:flex-start;'>"
+        f"<div style='width:20px;height:20px;border-radius:50%;background:#dc262620;"
+        f"border:2px solid #dc2626;display:flex;align-items:center;justify-content:center;"
+        f"font-size:9px;font-weight:700;color:#dc2626;flex-shrink:0;'>3</div>"
+        f"<div style='font-size:11px;color:{_TXT2};font-family:monospace;'>"
+        f"<span style='color:#dc2626;font-weight:700;'>Bounding box lookup failed</span>"
+        f" — no spatial coordinates found in Azure DI index or PyMuPDF text search</div></div>"
+        f"</div></div>",
+        unsafe_allow_html=True,
+    )
 
 
 _HAS_DIALOG = hasattr(st, "dialog")
@@ -964,10 +1478,20 @@ if _HAS_DIALOG:
     @st.dialog("📍 Field Location in Document", width="large")
     def _bbox_popup(field_name: str, field_info: dict, pdf_path: str) -> None:
         _render_bbox_content(field_name, field_info, pdf_path)
+
+    @st.dialog("🔍 Field Extraction Details", width="large")
+    def _no_bbox_popup(field_name: str, field_info: dict) -> None:
+        """FIX 3 — shown when eye button clicked but no bounding polygon exists."""
+        _render_no_bbox_content(field_name, field_info)
+
 else:
     def _bbox_popup(field_name: str, field_info: dict, pdf_path: str) -> None:  # type: ignore[misc]
         with st.expander(f"📍 {field_name}", expanded=True):
             _render_bbox_content(field_name, field_info, pdf_path)
+
+    def _no_bbox_popup(field_name: str, field_info: dict) -> None:  # type: ignore[misc]
+        with st.expander(f"🔍 {field_name} — Extraction Details", expanded=True):
+            _render_no_bbox_content(field_name, field_info)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1107,8 +1631,10 @@ def _render_entities_tab(
     if _EM_KEY not in st.session_state:
         st.session_state[_EM_KEY] = set()
 
-    _bbox_pending_name: str | None  = None
-    _bbox_pending_info: dict | None = None
+    _bbox_pending_name:    str | None  = None
+    _bbox_pending_info:    dict | None = None
+    _no_bbox_pending_name: str | None  = None
+    _no_bbox_pending_info: dict | None = None
 
     for field_name, field_info in intel_fields:
         extracted  = field_info.get("value", "")
@@ -1185,22 +1711,33 @@ def _render_entities_tab(
                     st.rerun()
 
             with beye:
+                # FIX 3 — Eye button is always enabled.
+                # When bbox is available → show location in PDF.
+                # When bbox is missing  → show extraction explanation dialog.
                 if has_bbox:
-                    tip = f"View in document · Confidence: {conf_pct}%"
+                    tip = f"View field location in document · Confidence: {conf_pct}%"
                 else:
-                    tip = "No bounding box available for this field"
+                    tip = "No bounding box — click to understand why this field was extracted"
+
                 if st.button("👁", key=f"_pbtn_eye_{field_name}", help=tip,
-                             disabled=not has_bbox, use_container_width=True):
-                    _bbox_pending_name = field_name
-                    _bbox_pending_info = field_info
+                             use_container_width=True):
+                    if has_bbox:
+                        _bbox_pending_name = field_name
+                        _bbox_pending_info = field_info
+                    else:
+                        _no_bbox_pending_name = field_name
+                        _no_bbox_pending_info = field_info
 
         st.markdown(
             f"<div style='height:1px;background:{_BORDER};margin:2px 0 4px 0;'></div>",
             unsafe_allow_html=True,
         )
 
+    # Open whichever popup was requested this render cycle
     if _bbox_pending_name and _bbox_pending_info is not None:
         _bbox_popup(_bbox_pending_name, _bbox_pending_info, pdf_path or "")
+    elif _no_bbox_pending_name and _no_bbox_pending_info is not None:
+        _no_bbox_popup(_no_bbox_pending_name, _no_bbox_pending_info)
 
     # ── Add New Field ─────────────────────────────────────────────────────────
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
@@ -1563,7 +2100,7 @@ def _render_summary_tab(intelligence: dict, selected_sheet: str) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TAB 3 — SIGNALS
+# TAB 3 — SIGNALS  (FIX 2: supporting_text no longer cropped)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _classify_severity(sig: dict, doc_type: str = "") -> str:
@@ -1586,7 +2123,6 @@ def _render_signals_tab(intelligence: dict) -> None:
     raw_llm_signals = intelligence.get("analysis", {}).get("signals", [])
     doc_type        = intelligence.get("doc_type", "")
 
-    # ── Fallback: keyword synthesis when LLM returned [] ─────────────────────
     synthesized = False
     if raw_llm_signals:
         signals = raw_llm_signals
@@ -1594,7 +2130,6 @@ def _render_signals_tab(intelligence: dict) -> None:
         signals     = _synthesize_signals_from_entities(intelligence)
         synthesized = bool(signals)
 
-    # Tab header
     st.markdown(
         _section_header(
             "Signal Detection",
@@ -1603,8 +2138,6 @@ def _render_signals_tab(intelligence: dict) -> None:
         ),
         unsafe_allow_html=True,
     )
-
-   
 
     if not signals:
         st.markdown(
@@ -1616,8 +2149,6 @@ def _render_signals_tab(intelligence: dict) -> None:
             unsafe_allow_html=True,
         )
         return
-
-    
 
     grouped: dict[str, list[dict]] = {lv: [] for lv in _TAXONOMY}
     for sig in signals:
@@ -1663,7 +2194,6 @@ def _render_signals_tab(intelligence: dict) -> None:
             sig_type = sig.get("type", "unknown")
             m = _get_signal_meta(sig_type, doc_type)
             c = m["color"]
-            # Small badge distinguishing AI vs keyword source
             source_badge = (
                 f"<span style='font-size:9px;color:#92400e;background:#fffbeb;"
                 f"border:1px solid #fde68a;border-radius:10px;"
@@ -1675,6 +2205,29 @@ def _render_signals_tab(intelligence: dict) -> None:
                 f"padding:1px 7px;font-family:monospace;margin-left:6px;'>"
                 "</span>"
             )
+
+            # FIX 2 — supporting_text: full text shown, wraps correctly
+            supporting_text = sig.get("supporting_text", "")
+            supporting_html = ""
+            if supporting_text:
+                # Escape HTML entities to prevent injection / rendering issues
+                safe_text = (
+                    supporting_text
+                    .replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace('"', "&quot;")
+                )
+                supporting_html = (
+                    f"<div style='font-size:11px;color:{_LBL};font-family:monospace;"
+                    f"background:{_BG2};border-left:2px solid {_BORDER2};padding:6px 10px;"
+                    f"border-radius:0 4px 4px 0;font-style:italic;"
+                    # FIX 2: these three properties prevent cropping
+                    f"white-space:pre-wrap;word-break:break-word;"
+                    f"overflow-wrap:anywhere;margin-top:6px;'>"
+                    f"📄 &ldquo;{safe_text}&rdquo;</div>"
+                )
+
             st.markdown(
                 f"<div style='background:{_BG};border:1px solid {_BORDER};"
                 f"border-left:4px solid {tc};border-radius:8px;"
@@ -1692,13 +2245,7 @@ def _render_signals_tab(intelligence: dict) -> None:
                 f"</div>"
                 f"<div style='font-size:13px;color:{_TXT};line-height:1.7;margin-bottom:6px;'>"
                 f"{sig.get('description', '')}</div>"
-                + (
-                    f"<div style='font-size:11px;color:{_LBL};font-family:monospace;"
-                    f"background:{_BG2};border-left:2px solid {_BORDER2};padding:5px 10px;"
-                    f"border-radius:0 4px 4px 0;font-style:italic;'>"
-                    f"📄 \"{sig.get('supporting_text', '')}\"</div>"
-                    if sig.get("supporting_text") else ""
-                )
+                + supporting_html
                 + "</div>",
                 unsafe_allow_html=True,
             )
@@ -1813,6 +2360,7 @@ def _render_raw_json_tab(intelligence: dict, selected_sheet: str) -> None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 5 — TRANSFORMATION JOURNEY
+# (FIX 1: LLM-assigned "Other" for Cause of Loss correctly shown as LLM MAPPED)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_journey_tab(
@@ -1892,14 +2440,56 @@ def _render_journey_tab(
 
     def _source_step_html(step_n: int, field_info: dict, step1_ts: str) -> str:
         """
-        Renders Step 2 with the ACTUAL extraction source instead of a hardcoded label.
-        Uses _extraction_source_label() to resolve the true pipeline step.
+        Step 2 of the transformation timeline.
+
+        FIX 1: detects LLM-assigned "Other" for Cause of Loss.
+        When the document has an empty Cause of Loss column and the
+        schema-mapping LLM filled it in as "Other", the field_info will NOT
+        have _adi_matched=True (because there was nothing in Azure DI to
+        match against). Instead we detect this case by checking:
+          • field is cause-of-loss
+          • value is "Other" (or similar LLM fallback token)
+          • Azure DI raw value was empty / absent
+        and override the label to "LLM MAPPED — AI inference".
         """
         icon, label, detail = _extraction_source_label(field_info)
 
-        # Colour the step circle based on source
+        # ── FIX 1 — detect LLM-assigned "Other" for Cause of Loss ────────────
+        field_name_str = field_info.get("_field_name_hint", "")
+        raw_value      = field_info.get("value", "")
+        adi_raw_value  = field_info.get("_adi_raw_value", "")  # set below if available
+
+        # A value of "Other" (or empty/unknown variants) on a COL field with no
+        # Azure DI source strongly implies LLM inference fallback.
+        _llm_other_indicators = {
+            "other", "n/a", "unknown", "not specified", "not stated",
+            "unspecified", "see narrative", "various",
+        }
+        _is_col = (
+            "cause" in field_name_str.lower()
+            or "cause of loss" in field_name_str.lower()
+        )
+        _llm_assigned_other = (
+            _is_col
+            and raw_value.strip().lower() in _llm_other_indicators
+            and not field_info.get("_adi_matched", False)
+        )
+        if _llm_assigned_other:
+            icon   = "🤖"
+            label  = "LLM MAPPED — AI inference (value: Other)"
+            detail = (
+                f"The Cause of Loss column was empty in the source document. "
+                f"The LLM assigned the value \"{raw_value}\" because no explicit "
+                f"peril keyword was found in the document text. "
+                f"This is an AI-inferred fallback — not a value read directly from the document. "
+                f"Review the document narrative to confirm or override this classification."
+            )
+
+        # Colour the step circle based on resolved source
         if field_info.get("_user_added"):
             step_color = "#7c3aed"
+        elif _llm_assigned_other:
+            step_color = "#ca8a04"   # amber = LLM inference
         elif field_info.get("_from_call_b"):
             step_color = "#ca8a04"
         elif field_info.get("_adi_matched") and field_info.get("_adi_confidence", 0) > 0:
@@ -1930,11 +2520,16 @@ def _render_journey_tab(
             f"</div>"
             f"<div style='font-size:11px;color:{_LBL};font-family:monospace;"
             f"line-height:1.6;background:{_BG2};border:1px solid {_BORDER};"
-            f"border-radius:4px;padding:6px 10px;'>{detail}</div>"
+            f"border-radius:4px;padding:6px 10px;"
+            f"white-space:pre-wrap;word-break:break-word;'>{detail}</div>"
             f"</div></div>"
         )
 
     def _field_card(fname: str, finfo: dict) -> None:
+        # Inject field name hint so _source_step_html can check it
+        finfo = dict(finfo)
+        finfo["_field_name_hint"] = fname
+
         extracted = finfo.get("value", "")
         changes   = hist.get(fname, [])
         is_mod    = bool(changes)
@@ -1988,7 +2583,7 @@ def _render_journey_tab(
             + f"</div></div>"
         )
 
-        # Step 2 — Actual extraction source (LLM / ADI / PyMuPDF / user)
+        # Step 2 — Actual extraction source (with FIX 1 LLM-Other detection)
         html += _source_step_html(2, finfo, step1_ts)
 
         # Step 3+ — User edits
@@ -2381,7 +2976,6 @@ def render_pdf_analysis_panel(
     meta     = _get_doc_type_meta(doc_type)
     subtype  = intelligence.get("analysis", {}).get("detected_subtype") or ""
 
-    # ── Cache invalidation fingerprint ────────────────────────────────────────
     _intel_fp = (
         uploaded_name
         + "|" + str(intelligence.get("page_count", 0))
@@ -2438,12 +3032,11 @@ def render_pdf_analysis_panel(
     intel_fields    = _get_intelligence_entities(selected_sheet)
     _entities_count = len(intel_fields) if intel_fields else len(_get_raw_fields(selected_sheet))
 
-    # Signal count includes synthesized signals for the tab badge
     _raw_signals   = intelligence.get("analysis", {}).get("signals", [])
     _synth_signals = _synthesize_signals_from_entities(intelligence) if not _raw_signals else []
     _signals_count = len(_raw_signals) if _raw_signals else len(_synth_signals)
     _signals_label = (
-        f"⚡ Signals ({_signals_count}✦)"   # ✦ = synthesized
+        f"⚡ Signals ({_signals_count}✦)"
         if (not _raw_signals and _synth_signals) else
         f"⚡ Signals ({_signals_count})"
     )

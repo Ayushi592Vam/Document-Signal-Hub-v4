@@ -65,14 +65,25 @@ def _get_di_client() -> DocumentAnalysisClient:
 # TEXT CLEANING
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Common single-character OCR artifacts from filled/unfilled checkbox glyphs
+_CHECKBOX_OCR_PREFIX = re.compile(
+    r"^[CBDOX■□●○◆◇▪▫\uf0fc\uf0a7\u25a0\u25a1\u2022]\s+", re.UNICODE
+)
+
 def _clean_text(val: str) -> str:
     if not val:
         return ""
     val = val.replace("\u00a0", " ")
-    val = val.replace("\uf0b7", "•")
+    val = val.replace("\uf0b7",  "•")
+    val = val.replace("\uf0fc",  "")   # Wingdings checkbox tick → strip
+    val = val.replace("\uf0a7",  "")   # Wingdings bullet → strip
     val = re.sub(r"[ \t]+", " ", val)
     val = re.sub(r"\n{3,}", "\n\n", val)
-    return val.strip(" :.-\n\t")
+    val = val.strip(" :.-\n\t")
+    # Strip leading single-char OCR artifact from checkbox glyphs
+    # e.g. "C CLM-2025-CP-114477" → "CLM-2025-CP-114477"
+    val = _CHECKBOX_OCR_PREFIX.sub("", val).strip()
+    return val
 
 
 # ─────────────────────────────────────────────────────────────────────────────

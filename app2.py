@@ -432,6 +432,11 @@ else:
 is_dup         = st.session_state.get("is_duplicate_file", False)
 sheet_dup_info = st.session_state.get("sheet_dup_info", {})
 
+# ── Guard: ensure sheet_names is always initialized ──────────────────────────
+if "sheet_names" not in st.session_state:
+    st.session_state.sheet_names = get_sheet_names(excel_path)
+
+    
 render_file_card(
     uploaded, excel_path, file_hash, is_dup,
     sheet_dup_info, st.session_state.sheet_names,

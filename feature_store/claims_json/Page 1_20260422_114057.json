@@ -1,0 +1,737 @@
+{
+  "records": {
+    "Insurance": {
+      "XL": {
+        "value": "Insurance",
+        "modified": "Insurance",
+        "original": "Insurance",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "XL: Insurance",
+        "bounding_polygon": null,
+        "page_width": null,
+        "page_height": null,
+        "confidence": 0.95,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "AXA": {
+        "value": "Claim Notice of Loss Form (Effective Nov 2019) Please complete each of the sections below that are applicable. Fields marked with an asterisk (*) are required. Reported By",
+        "modified": "Claim Notice of Loss Form (Effective Nov 2019) Please complete each of the sections below that are applicable. Fields marked with an asterisk (*) are required. Reported By",
+        "original": "Claim Notice of Loss Form (Effective Nov 2019) Please complete each of the sections below that are applicable. Fields marked with an asterisk (*) are required. Reported By",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "AXA: Claim Notice of Loss Form (Effective Nov 2019) Please complete each of the sections below that are applicable. Fields marked with an asterisk (*) are required. Reported By",
+        "bounding_polygon": null,
+        "page_width": null,
+        "page_height": null,
+        "confidence": 0.95,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Title": {
+        "value": "Mr",
+        "modified": "Mr",
+        "original": "Mr",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Title: Mr",
+        "bounding_polygon": [
+          [
+            0.5539,
+            4.5833
+          ],
+          [
+            1.0697,
+            4.5833
+          ],
+          [
+            1.0697,
+            4.7122
+          ],
+          [
+            0.5539,
+            4.7122
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "*First Name": {
+        "value": "John A",
+        "modified": "John A",
+        "original": "John A",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "*First Name: John A",
+        "bounding_polygon": [
+          [
+            1.5494,
+            4.569
+          ],
+          [
+            2.6861,
+            4.569
+          ],
+          [
+            2.6861,
+            4.7249
+          ],
+          [
+            1.5494,
+            4.7249
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.892,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "*Last Name": {
+        "value": "Peterson",
+        "modified": "Peterson",
+        "original": "Peterson",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "*Last Name: Peterson",
+        "bounding_polygon": [
+          [
+            3.9085,
+            4.569
+          ],
+          [
+            5.1525,
+            4.569
+          ],
+          [
+            5.1525,
+            4.7266
+          ],
+          [
+            3.9085,
+            4.7266
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.907,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Street/Post Office Box": {
+        "value": "2458 Maplewood Drive",
+        "modified": "2458 Maplewood Drive",
+        "original": "2458 Maplewood Drive",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Street/Post Office Box: 2458 Maplewood Drive",
+        "bounding_polygon": [
+          [
+            1.8433,
+            5.1228
+          ],
+          [
+            3.1374,
+            5.1228
+          ],
+          [
+            3.1374,
+            5.4236
+          ],
+          [
+            1.8433,
+            5.4236
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.315,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "City": {
+        "value": "Pittsburgh",
+        "modified": "Pittsburgh",
+        "original": "Pittsburgh",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "City: Pittsburgh",
+        "bounding_polygon": [
+          [
+            1.8385,
+            5.7101
+          ],
+          [
+            2.7315,
+            5.7101
+          ],
+          [
+            2.7315,
+            5.8581
+          ],
+          [
+            1.8385,
+            5.8581
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "State/Province": {
+        "value": "PA",
+        "modified": "PA",
+        "original": "PA",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "State/Province: PA",
+        "bounding_polygon": [
+          [
+            5.4868,
+            5.7053
+          ],
+          [
+            6.5612,
+            5.7053
+          ],
+          [
+            6.5612,
+            5.8533
+          ],
+          [
+            5.4868,
+            5.8533
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "*Country": {
+        "value": "USA",
+        "modified": "USA",
+        "original": "USA",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "*Country: USA",
+        "bounding_polygon": [
+          [
+            1.8433,
+            5.9106
+          ],
+          [
+            2.6885,
+            5.9106
+          ],
+          [
+            2.6885,
+            6.049
+          ],
+          [
+            1.8433,
+            6.049
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Zip/Postal Code": {
+        "value": "15217",
+        "modified": "15217",
+        "original": "15217",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Zip/Postal Code: 15217",
+        "bounding_polygon": [
+          [
+            5.5029,
+            5.8935
+          ],
+          [
+            6.8048,
+            5.8935
+          ],
+          [
+            6.8048,
+            6.0685
+          ],
+          [
+            5.5029,
+            6.0685
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.907,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "*Contact Info": {
+        "value": "(412) 555-7834",
+        "modified": "(412) 555-7834",
+        "original": "(412) 555-7834",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "*Contact Info: (412) 555-7834",
+        "bounding_polygon": [
+          [
+            0.5455,
+            6.4175
+          ],
+          [
+            2.3399,
+            6.4175
+          ],
+          [
+            2.3399,
+            6.5981
+          ],
+          [
+            0.5455,
+            6.5981
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.894,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Reference Number": {
+        "value": "FNOL-2026-0001",
+        "modified": "FNOL-2026-0001",
+        "original": "FNOL-2026-0001",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Reference Number: FNOL-2026-0001",
+        "bounding_polygon": [
+          [
+            0.5371,
+            6.6638
+          ],
+          [
+            2.6837,
+            6.6638
+          ],
+          [
+            2.6837,
+            6.8273
+          ],
+          [
+            0.5371,
+            6.8273
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.907,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Role in Relation to Loss": {
+        "value": "Insured/Policy Holder (Please check one) Insured Agent/Broker Claimant Claimant Agent/Broker",
+        "modified": "Insured/Policy Holder (Please check one) Insured Agent/Broker Claimant Claimant Agent/Broker",
+        "original": "Insured/Policy Holder (Please check one) Insured Agent/Broker Claimant Claimant Agent/Broker",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Role in Relation to Loss: Insured/Policy Holder (Please check one) Insured Agent/Broker Claimant Claimant Agent/Broker",
+        "bounding_polygon": null,
+        "page_width": null,
+        "page_height": null,
+        "confidence": 0.95,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Other": {
+        "value": "Continued",
+        "modified": "Continued",
+        "original": "Continued",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Other: Continued",
+        "bounding_polygon": [
+          [
+            2.1334,
+            7.725
+          ],
+          [
+            2.6646,
+            7.725
+          ],
+          [
+            2.6646,
+            7.8762
+          ],
+          [
+            2.1334,
+            7.8762
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Company Name": {
+        "value": "N/A",
+        "modified": "N/A",
+        "original": "N/A",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Company Name: N/A",
+        "bounding_polygon": [
+          [
+            0.5436,
+            4.8332
+          ],
+          [
+            1.8194,
+            4.8332
+          ],
+          [
+            1.8194,
+            5.013
+          ],
+          [
+            0.5436,
+            5.013
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.907,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Telephone": {
+        "value": "selected",
+        "modified": "selected",
+        "original": "selected",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Telephone: selected",
+        "bounding_polygon": [
+          [
+            2.6925,
+            6.1527
+          ],
+          [
+            3.5051,
+            6.1527
+          ],
+          [
+            3.5051,
+            6.3254
+          ],
+          [
+            2.6925,
+            6.3254
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "eMail": {
+        "value": "unselected",
+        "modified": "unselected",
+        "original": "unselected",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "eMail: unselected",
+        "bounding_polygon": [
+          [
+            3.5754,
+            6.1493
+          ],
+          [
+            4.0972,
+            6.1493
+          ],
+          [
+            4.0972,
+            6.3242
+          ],
+          [
+            3.5754,
+            6.3242
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Insured/Policy Holder": {
+        "value": "selected",
+        "modified": "selected",
+        "original": "selected",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Insured/Policy Holder: selected",
+        "bounding_polygon": [
+          [
+            2.1309,
+            6.9418
+          ],
+          [
+            3.5194,
+            6.9418
+          ],
+          [
+            3.5194,
+            7.1008
+          ],
+          [
+            2.1309,
+            7.1008
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.907,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Insured Agent/Broker": {
+        "value": "unselected",
+        "modified": "unselected",
+        "original": "unselected",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Insured Agent/Broker: unselected",
+        "bounding_polygon": [
+          [
+            2.1321,
+            7.1381
+          ],
+          [
+            3.5051,
+            7.1381
+          ],
+          [
+            3.5051,
+            7.2918
+          ],
+          [
+            2.1321,
+            7.2918
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.907,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Claimant": {
+        "value": "unselected",
+        "modified": "unselected",
+        "original": "unselected",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Claimant: unselected",
+        "bounding_polygon": [
+          [
+            2.1334,
+            7.3367
+          ],
+          [
+            2.8222,
+            7.3367
+          ],
+          [
+            2.8222,
+            7.4879
+          ],
+          [
+            2.1334,
+            7.4879
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.923,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      },
+      "Claimant Agent/Broker": {
+        "value": "unselected",
+        "modified": "unselected",
+        "original": "unselected",
+        "excel_row": 1,
+        "excel_col": null,
+        "source_type": "pdf",
+        "source_page": 1,
+        "source_text": "Claimant Agent/Broker: unselected",
+        "bounding_polygon": [
+          [
+            2.1321,
+            7.5187
+          ],
+          [
+            3.591,
+            7.5187
+          ],
+          [
+            3.591,
+            7.6771
+          ],
+          [
+            2.1321,
+            7.6771
+          ]
+        ],
+        "page_width": 8.5,
+        "page_height": 11.0,
+        "confidence": 0.907,
+        "_pdf_raw": true,
+        "source_block": null,
+        "source_para": null,
+        "source_table": null,
+        "source_row": null,
+        "source_col": null
+      }
+    }
+  },
+  "sheet_type": "PDF",
+  "total_rows": 1,
+  "total_cols": 21,
+  "sheet_name": "Page 1",
+  "col_rename_log": {}
+}

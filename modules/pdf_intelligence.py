@@ -416,7 +416,6 @@ Return ONLY valid JSON — no markdown, no preamble.
 
 
 def _entities_system(doc_type: str, subtype: str | None = None) -> str:
-    """Build the entities+signals system prompt from config."""
     role          = get_role(doc_type)
     entity_fields = build_entity_field_list(doc_type, subtype)
     signal_types  = get_signal_types(doc_type)
@@ -426,11 +425,24 @@ def _entities_system(doc_type: str, subtype: str | None = None) -> str:
         f"Pay special attention to the additional fields listed above.\n"
     ) if subtype else ""
 
+    # ADD THIS:
+    checkbox_rule = textwrap.dedent("""
+CHECKBOX FIELDS — CRITICAL RULE:
+  • Checkboxes appear as filled (■ ● ✓ ☑ or similar) or unfilled (□ ○ ☐).
+  • For any field that lists checkbox options (e.g. Cause of Loss, Property Type),
+    extract ONLY the label(s) next to FILLED/CHECKED boxes.
+  • Do NOT list unchecked options. If no box is filled, return an empty string.
+  • Example: "■ Fire □ Explosion □ Wind" → value = "Fire"
+  • Example: "■ Fire ■ Explosion □ Wind" → value = "Fire, Explosion"
+""").strip()
+
     return textwrap.dedent(f"""
 You are a {role}.
 {subtype_note}
 Extract ONLY these entity fields (skip any not present in the document):
 {entity_fields}
+
+{checkbox_rule}
 
 Signal types to detect: {signal_types}
 

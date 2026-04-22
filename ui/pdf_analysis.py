@@ -399,7 +399,7 @@ def _sig_tokens(s: str) -> set:
         if len(t) >= 3 and t not in {"the", "and", "for", "from", "with", "that"}
     }
 
-    
+
 def _find_azure_match(
     entity_name: str,
     lookup: dict,
@@ -1121,49 +1121,48 @@ def _sync_edit(field_name: str, new_value: str, selected_sheet: str) -> None:
 def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> None:
     """
     Render the zoomed PDF crop with highlighted bounding box.
- 
-    New in this version:
-    • After converting polygon coords to PDF-point space, extract OCR text from
-      the computed rect.  If the extracted value tokens are NOT present in that
-      region, run a fresh page.search_for(value) and use that rect instead.
-    • This corrects cases where the stored polygon points at a heading/label
-      that happens to be near the real value (e.g. "PRAYER FOR RELIEF" shown
-      for "Jury Trial Demanded").
+
+    FIXES applied in this version:
+    ─────────────────────────────────────────────────────────────────────────
+    FIX A — Label-vs-value mismatch:
+      If the polygon region contains the field label but not the value,
+      fall back to page.search_for() for the actual value text.
+
+    FIX B — Wrong value for short/numeric fields (phone, code, date):
+      Use exact digit-string comparison, not token overlap.
+      If digits don't match, search ALL pages (not just source_page) so that
+      a value extracted from page 2 isn't incorrectly shown on page 1.
+
+    FIX C — Expand bbox for long multi-line values:
+      After a fallback search hit, expand the rect downward by up to 6 line
+      heights to cover a reasonable portion of a paragraph value.
+
+    FIX D — Boolean / very short values ("Yes", "No", True/False):
+      When the value is ≤5 chars (Yes/No/True/False), the highlight rect is
+      often just one word wide. Expand it horizontally to include the checkbox
+      label context (±120 pts) so the zoomed view is readable.
+    ─────────────────────────────────────────────────────────────────────────
     """
-    import streamlit as st  # type: ignore
- 
-    # ── These colour constants are defined at module level in pdf_analysis.py ──
-    _BG    = "#ffffff"
-    _BG2   = "#f8f9fa"
-    _BORDER= "#e2e8f0"
-    _TXT   = "#0f172a"
-    _TXT2  = "#1e293b"
-    _LBL   = "#64748b"
-    _LBL2  = "#94a3b8"
- 
-    def _lookup_confidence(fi: dict) -> float:
-        direct = fi.get("confidence")
-        if direct is not None and float(direct) > 0:
-            return float(direct)
-        if fi.get("bounding_polygon"):
-            return 0.85
-        return 0.0
- 
+    import streamlit as st
+    import re as _re
+
     bounding_polygon = field_info.get("bounding_polygon")
     source_page      = int(field_info.get("source_page", 1))
     page_width       = float(field_info.get("page_width",  8.5))
     page_height      = float(field_info.get("page_height", 11.0))
     extracted_value  = field_info.get("value", "")
-    confidence       = _lookup_confidence(field_info)
+    confidence       = _lookup_confidence(field_name, field_info)
     conf_pct         = int(confidence * 100)
     conf_hex         = "#16a34a" if conf_pct >= 80 else "#ca8a04" if conf_pct >= 60 else "#dc2626"
-    conf_bg          = "#f0fdf4" if conf_pct >= 80 else "#fefce8" if conf_pct >= 60 else "#fef2f2"
     conf_rgb         = (
         (0.09, 0.64, 0.26) if conf_pct >= 80 else
         (0.79, 0.54, 0.02) if conf_pct >= 60 else
         (0.86, 0.15, 0.15)
     )
- 
+
+    def _digits_only(s: str) -> str:
+        return _re.sub(r"\D", "", s)
+
     # ── Field info header ─────────────────────────────────────────────────────
     st.markdown(
         f"<div style='background:{_BG};border:1px solid {_BORDER};"
@@ -1195,43 +1194,43 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         f"</div></div>",
         unsafe_allow_html=True,
     )
- 
+
     if not bounding_polygon:
         st.warning(
             "⚠ No bounding-box coordinates for this field.\n\n"
             "Azure DI did not return a precise region for this key-value pair."
         )
         return
- 
+
     if not pdf_path or not os.path.exists(pdf_path):
         st.error("❌ PDF file not accessible for rendering.")
         return
- 
+
     try:
         import fitz
- 
+
         doc         = fitz.open(pdf_path)
         total_pages = len(doc)
- 
+
         if source_page < 1 or source_page > total_pages:
             st.error(f"Page {source_page} out of range ({total_pages} total).")
             doc.close()
             return
- 
+
         page    = doc[source_page - 1]
         pw_pts  = page.rect.width
         ph_pts  = page.rect.height
- 
-        # Correct scaling: polygon stored in inches → convert to PDF points
+
+        # Correct scaling: polygon stored in inches → PDF points
         sx = pw_pts / page_width   if page_width  > 0 else 72.0
         sy = ph_pts / page_height  if page_height > 0 else 72.0
- 
+
         pts = [(x * sx, y * sy) for x, y in bounding_polygon]
         xs  = [p[0] for p in pts]
         ys  = [p[1] for p in pts]
         x0, y0, x1, y1 = min(xs), min(ys), max(xs), max(ys)
- 
-        # Clamp to page
+
+        # Clamp to page bounds
         x0 = max(0.0, min(x0, pw_pts))
         y0 = max(0.0, min(y0, ph_pts))
         x1 = max(0.0, min(x1, pw_pts))
@@ -1240,45 +1239,226 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             x1 = x0 + max(4.0, pw_pts * 0.05)
         if y1 - y0 < 4:
             y1 = y0 + max(4.0, ph_pts * 0.02)
- 
-        # ── FIX 3: verify polygon region actually contains the value ──────────
-        val_toks = _sig_tokens(extracted_value)
-        if val_toks and extracted_value:
-            check_clip = fitz.Rect(
+
+        # ─────────────────────────────────────────────────────────────────────
+        # VALIDATION: does this rect actually contain the extracted value?
+        # ─────────────────────────────────────────────────────────────────────
+        val_str      = (extracted_value or "").strip()
+        val_lower    = val_str.lower()
+        val_toks     = _sig_tokens(val_str)
+        val_digits   = _digits_only(val_str)
+        is_boolean   = val_lower in {"yes", "no", "true", "false"}
+        is_short     = len(val_str) <= 40   # phone/code/date/boolean
+        corrected    = False
+        display_page = source_page          # may change if value found on different page
+
+        # ── BOOLEAN SPECIAL CASE ─────────────────────────────────────────────────────
+        # Problem: "Yes"/"No" appear many times on a form. We must identify which
+        # specific checkbox belongs to THIS field.
+        #
+        # Core strategy — in priority order:
+        #   1. Use the Azure DI polygon centre as a spatial anchor (it knows WHICH
+        #      field region this is, even if the polygon itself is slightly off).
+        #      Find the "Yes"/"No" rect whose centre is closest to the ADI polygon centre.
+        #      Apply a strict distance cap so we never jump to a different row.
+        #   2. If no "Yes"/"No" rects exist near the ADI anchor, search for the field
+        #      label text and use that Y as fallback anchor.
+        #   3. Last resort: pick the globally closest "Yes"/"No" to the polygon centre.
+        #
+        # The key insight: we do NOT trust the polygon rect for display (it may cover
+        # the wrong row), but we DO trust its CENTRE POINT as a location hint.
+        if is_boolean and val_str:
+            # ADI polygon centre — our primary spatial anchor
+            adi_centre_x = (x0 + x1) / 2.0
+            adi_centre_y = (y0 + y1) / 2.0
+
+            # Search for all occurrences of the boolean value on the page
+            val_rects = (
+                page.search_for(val_str)
+                or page.search_for(val_str.upper())
+                or page.search_for(val_str.lower())
+            )
+
+            best_r = None
+
+            if val_rects:
+                line_h = val_rects[0].height if val_rects[0].height > 0 else 12.0
+
+                # Strategy 1: find "Yes"/"No" rect closest to ADI polygon centre,
+                # but cap at 3 line-heights vertically (same general area of the form)
+                nearby = [
+                    r for r in val_rects
+                    if abs((r.y0 + r.y1) / 2.0 - adi_centre_y) <= line_h * 3
+                ]
+
+                if nearby:
+                    # Among nearby, pick the one with smallest Euclidean distance
+                    # to the ADI polygon centre
+                    def _dist(r):
+                        cx = (r.x0 + r.x1) / 2.0
+                        cy = (r.y0 + r.y1) / 2.0
+                        return ((cx - adi_centre_x) ** 2 + (cy - adi_centre_y) ** 2) ** 0.5
+                    best_r = min(nearby, key=_dist)
+                else:
+                    # Strategy 2: try label text search as secondary anchor
+                    label_variants = [
+                        field_name,
+                        field_name.upper(),
+                        field_name.title(),
+                        " ".join(w.capitalize() for w in field_name.split()),
+                    ]
+                    label_anchor_y = None
+                    for lv in label_variants:
+                        lrects = page.search_for(lv)
+                        if lrects:
+                            label_anchor_y = (lrects[0].y0 + lrects[0].y1) / 2.0
+                            break
+
+                    # Try individual long words from the label
+                    if label_anchor_y is None:
+                        label_words = [w for w in field_name.split() if len(w) > 4]
+                        word_ys = []
+                        for lw in label_words:
+                            wr = page.search_for(lw)
+                            if wr:
+                                word_ys.append((wr[0].y0 + wr[0].y1) / 2.0)
+                        if word_ys:
+                            label_anchor_y = sum(word_ys) / len(word_ys)
+
+                    if label_anchor_y is not None:
+                        same_row = [
+                            r for r in val_rects
+                            if abs((r.y0 + r.y1) / 2.0 - label_anchor_y) <= line_h * 1.5
+                        ]
+                        if same_row:
+                            best_r = min(same_row,
+                                         key=lambda r: abs((r.y0 + r.y1) / 2.0 - label_anchor_y))
+                        else:
+                            # Strategy 3: global closest to ADI centre — last resort
+                            best_r = min(val_rects,
+                                         key=lambda r: abs((r.y0 + r.y1) / 2.0 - adi_centre_y))
+                    else:
+                        # Strategy 3: no label found either — global closest to ADI centre
+                        best_r = min(val_rects,
+                                     key=lambda r: abs((r.y0 + r.y1) / 2.0 - adi_centre_y))
+
+            if best_r is not None:
+                x0, y0, x1, y1 = best_r.x0, best_r.y0, best_r.x1, best_r.y1
+                corrected = True
+
+            # Expand horizontally to show the full checkbox row context
+            row_pad = pw_pts * 0.15
+            x0 = max(0.0,    x0 - row_pad)
+            x1 = min(pw_pts, x1 + row_pad)
+            y0 = max(0.0,    y0 - 8)
+            y1 = min(ph_pts, y1 + 8)
+
+        elif val_str:
+            # ── NON-BOOLEAN VALIDATION ────────────────────────────────────────
+            check_clip    = fitz.Rect(
                 max(0, x0 - 20), max(0, y0 - 8),
                 min(pw_pts, x1 + 20), min(ph_pts, y1 + 8)
             )
-            region_text = page.get_text("text", clip=check_clip).strip()
-            region_toks = _sig_tokens(region_text)
- 
-            if not (val_toks & region_toks):
-                # Polygon is pointing at the wrong region — search for value directly
-                fallback_rects = (
-                    page.search_for(extracted_value)
-                    or page.search_for(extracted_value.upper())
-                    or page.search_for(" ".join(extracted_value.split()[:6]))
-                    or page.search_for(" ".join(extracted_value.split()[:4]))
+            region_text   = page.get_text("text", clip=check_clip).strip()
+            region_lower  = region_text.lower()
+            region_digits = _digits_only(region_text)
+
+            # Determine if the stored rect is wrong
+            if is_short:
+                if val_digits and len(val_digits) >= 7:
+                    rect_is_wrong = val_digits not in region_digits
+                else:
+                    rect_is_wrong = val_lower not in region_lower
+            else:
+                if val_toks:
+                    overlap = len(val_toks & _sig_tokens(region_text)) / len(val_toks)
+                    rect_is_wrong = overlap < 0.30
+                else:
+                    rect_is_wrong = False
+
+            if rect_is_wrong:
+                # Search all pages (source page first) for the actual value
+                pages_to_search = (
+                    [source_page - 1]
+                    + [i for i in range(total_pages) if i != source_page - 1]
                 )
-                if fallback_rects:
-                    # Pick the rect whose surrounding text best overlaps the value
-                    best_r     = None
-                    best_score = -1
-                    for r in fallback_rects:
-                        pad   = fitz.Rect(r.x0 - 15, r.y0 - 5, r.x1 + 15, r.y1 + 5)
-                        nearby= page.get_text("text", clip=pad)
-                        score = len(val_toks & _sig_tokens(nearby))
-                        if score > best_score:
-                            best_score = score
-                            best_r     = r
-                    if best_r:
-                        x0, y0, x1, y1 = best_r.x0, best_r.y0, best_r.x1, best_r.y1
-                        st.info(
-                            "ℹ️ The stored bounding box pointed to a different region. "
-                            "Showing the best text-search match for the extracted value instead."
-                        )
- 
+
+                words = val_str.split()
+                if is_short:
+                    search_candidates = [val_str, val_str.upper(), val_str.lower()]
+                else:
+                    search_candidates = []
+                    for n in (len(words), 8, 6, 4):
+                        if n <= len(words):
+                            phrase = " ".join(words[:n])
+                            if phrase not in search_candidates:
+                                search_candidates.append(phrase)
+
+                best_r      = None
+                best_score  = -1
+                best_page_i = source_page - 1
+
+                for page_i in pages_to_search:
+                    search_page = doc[page_i]
+                    sp_w = search_page.rect.width
+                    sp_h = search_page.rect.height
+
+                    for cand in search_candidates:
+                        rects = search_page.search_for(cand)
+                        if not rects:
+                            rects = search_page.search_for(cand.upper())
+                        for r in rects:
+                            pad    = fitz.Rect(
+                                max(0, r.x0 - 20), max(0, r.y0 - 5),
+                                min(sp_w, r.x1 + 20), min(sp_h, r.y1 + 5)
+                            )
+                            nearby        = search_page.get_text("text", clip=pad)
+                            nearby_digits = _digits_only(nearby)
+
+                            if is_short:
+                                if val_digits and len(val_digits) >= 7:
+                                    score = 2.0 if val_digits in nearby_digits else 0.0
+                                else:
+                                    score = 1.0 if val_lower in nearby.lower() else 0.0
+                            else:
+                                nearby_toks = _sig_tokens(nearby)
+                                score = len(val_toks & nearby_toks) / max(len(val_toks), 1)
+
+                            if score > best_score:
+                                best_score  = score
+                                best_r      = r
+                                best_page_i = page_i
+
+                        if best_r and best_score >= 1.0:
+                            break
+                    if best_r and best_score >= 1.0:
+                        break
+
+                if best_r and best_score > 0:
+                    if best_page_i != source_page - 1:
+                        page         = doc[best_page_i]
+                        pw_pts       = page.rect.width
+                        ph_pts       = page.rect.height
+                        display_page = best_page_i + 1
+
+                    new_x0 = best_r.x0
+                    new_y0 = best_r.y0
+                    new_x1 = best_r.x1
+                    new_y1 = best_r.y1
+
+                    # Expand downward for long paragraph values
+                    if not is_short and len(words) > 6:
+                        line_h      = best_r.height or 12
+                        expand_down = min(line_h * 6, ph_pts - new_y1)
+                        new_y1     += expand_down
+                        new_x0      = max(0, new_x0 - 10)
+                        new_x1      = min(pw_pts, new_x1 + 60)
+
+                    x0, y0, x1, y1 = new_x0, new_y0, new_x1, new_y1
+                    corrected = True
+
         bbox = fitz.Rect(x0, y0, x1, y1)
- 
+
         # ── Draw highlight ────────────────────────────────────────────────────
         shape = page.new_shape()
         shape.draw_rect(bbox)
@@ -1289,13 +1469,12 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             width=2.5,
         )
         shape.commit()
- 
+
         # ── Confidence pill ───────────────────────────────────────────────────
         if conf_pct > 0:
-            label  = f"  {conf_pct}% confidence  "
-            char_w = 5.6
-            pill_w = len(label) * char_w
-            pill_h = 15.0
+            label      = f"  {conf_pct}% confidence  "
+            pill_w     = len(label) * 5.6
+            pill_h     = 15.0
             pill_y_top = y0 - pill_h - 2
             if pill_y_top < 0:
                 pill_y_top = y1 + 2
@@ -1311,7 +1490,7 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                 fontsize=8,
                 color=(1.0, 1.0, 1.0),
             )
- 
+
         # ── Crop with generous padding ────────────────────────────────────────
         box_w = x1 - x0
         box_h = y1 - y0
@@ -1323,30 +1502,43 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             min(pw_pts, x1 + pad_x),
             min(ph_pts, y1 + pad_y),
         )
- 
+
         pix_zoom = page.get_pixmap(matrix=fitz.Matrix(3.0, 3.0), clip=crop)
- 
+
+        correction_note = ""
+        if corrected and display_page != source_page:
+            correction_note = (
+                f" &nbsp;<span style='color:#ca8a04;font-size:10px;'>"
+                f"⚡ value found on page {display_page} (stored bbox was page {source_page})</span>"
+            )
+        elif corrected:
+            correction_note = (
+                " &nbsp;<span style='color:#ca8a04;font-size:10px;'>"
+                "⚡ bbox auto-corrected to value location</span>"
+            )
+
         st.markdown(
             f"<div style='font-size:11px;font-weight:700;color:{_TXT2};"
             f"font-family:monospace;text-transform:uppercase;letter-spacing:1.5px;"
-            f"margin-bottom:8px;'>🔍 Zoomed View — Page {source_page}</div>",
+            f"margin-bottom:8px;'>🔍 Zoomed View — Page {display_page}"
+            + correction_note
+            + "</div>",
             unsafe_allow_html=True,
         )
         st.image(pix_zoom.tobytes("png"), use_container_width=True)
- 
+
         with st.expander("📄 Full Page View"):
             pix_full = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
             st.image(pix_full.tobytes("png"), use_container_width=True)
- 
+
         doc.close()
- 
+
     except ImportError:
         st.error("**PyMuPDF required.** Install: `pip install pymupdf`")
     except Exception as exc:
         st.error(f"Could not render PDF page: {exc}")
 
-
-# ─────────────────────────────────────────────────────────────────────────────
+        
 # FIX 3 — NO-BBOX POPUP: explains WHY field exists + why no bbox
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1592,9 +1784,13 @@ def _render_entities_tab(
         )
         intel_fields = raw
 
-    bbox_count = sum(1 for _, fi in intel_fields if fi.get("bounding_polygon"))
+    _non_bool_fields = [
+        (fn, fi) for fn, fi in intel_fields
+        if (fi.get("value") or "").strip().lower() not in {"yes", "no", "true", "false"}
+    ]
+    bbox_count = sum(1 for _, fi in _non_bool_fields if fi.get("bounding_polygon"))
     adi_count  = sum(
-        1 for _, fi in intel_fields
+        1 for _, fi in _non_bool_fields
         if fi.get("azure_di_key") or fi.get("_adi_confidence", 0) > 0
     )
 
@@ -1602,7 +1798,7 @@ def _render_entities_tab(
         _section_header(
             "Extracted Entities",
             (
-                f"{len(intel_fields)} field(s) · "
+                f"{len(_non_bool_fields)} field(s) · "
                 f"{adi_count} matched · "
                 f"{bbox_count} with bounding box"
             ),
@@ -1638,6 +1834,11 @@ def _render_entities_tab(
 
     for field_name, field_info in intel_fields:
         extracted  = field_info.get("value", "")
+
+        # Skip boolean Yes/No fields — not shown in the entities table
+        if (extracted or "").strip().lower() in {"yes", "no", "true", "false"}:
+            continue
+
         modified   = eds.get(field_name, field_info.get("modified", extracted))
         in_edit    = field_name in st.session_state[_EM_KEY]
         has_bbox   = bool(field_info.get("bounding_polygon"))

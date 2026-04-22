@@ -27525,5 +27525,196 @@
     "input_text": "03-08-2021 00:00",
     "cause_of_loss": "Other",
     "summary": "The claimant alleges that an incident occurred on March 8, 2021."
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T12:39:45.803986",
+    "filename": "FNOL Sample.pdf",
+    "file_hash": "6528fcf02e1ddff0548657975d8ea4dd3bc454f363e873801fff172a2fbc84be",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T12:40:44.967999",
+    "filename": "FNOL Sample.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "84e7c9bb5dcfbdb659041204c4c59e48b9b7369844e3dd6211b32e04d2b71177",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 21,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T12:43:57.110957",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T12:44:48.897678",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T12:56:09.791062",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T12:57:14.430751",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T13:03:46.444520",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T13:04:45.906747",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T13:10:08.732037",
+    "filename": "Legal_Sample.pdf",
+    "file_hash": "890569c832e58254f08742bcae988b0e7160de87e87d54410c658d0744cce68d",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T13:11:03.048468",
+    "filename": "Legal_Sample.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 10,
+    "col_renames": {}
+  },
+  {
+    "event": "SHEET_LOADED_FROM_CACHE",
+    "timestamp": "2026-04-22T13:14:06.797412",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a"
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T13:15:51.025654",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T13:16:49.777816",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T13:19:26.160732",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T13:20:26.489340",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
+  },
+  {
+    "event": "SHEET_LOADED_FROM_CACHE",
+    "timestamp": "2026-04-22T13:29:52.592737",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a"
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T13:30:25.181269",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "file_hash": "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T13:31:38.047771",
+    "filename": "FNOL_Auto_Vehicle_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 30,
+    "col_renames": {}
   }
 ]

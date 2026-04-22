@@ -91,6 +91,9 @@ entities:
     aliases: [Date Received, Date Reported, Report Date, Received Date]
     required: true
     type: date
+    # NOTE: This is the date the claim was REPORTED/FILED with the insurer —
+    # NOT the date the loss occurred. Extract only from fields explicitly
+    # labelled as filing/received/report date. Do NOT use Date of Loss for this field.
 
   - name: Received By
     aliases: [Received By, Filed By, Intake Officer]
@@ -109,9 +112,11 @@ entities:
     type: date
 
   - name: Phone Number
-    aliases: [Phone, Home Phone, Contact Phone, Mobile Phone, Phone (Direct), Primary Contact Phone]
+    aliases: [Phone, Home Phone, Contact Phone, Primary Contact Phone, Policyholder Phone]
     required: false
     type: phone
+    # NOTE: This is the POLICYHOLDER's primary phone number only.
+    # Do NOT use this for witness phones, other driver phones, or any third-party numbers.
 
   - name: Mobile Phone
     aliases: [Mobile, Cell Phone, Mobile Number]
@@ -124,15 +129,22 @@ entities:
     type: email
 
   - name: Insured Address
-    aliases: [Mailing Address, Property Address, Insured Premises Address, Address, Property Address (Insured Location)]
+    aliases: [Mailing Address, Insured Premises Address, Policyholder Address, Home Address]
     required: false
     type: address
+    # NOTE: This is the policyholder's MAILING or HOME address — where they live/receive mail.
+    # Do NOT use the location where the loss occurred for this field.
+    # If the loss happened at the insured address, Location of Loss should be extracted separately.
 
   # ── Loss / Incident ──────────────────────────────────────────────────────
   - name: Date of Loss
-    aliases: [Loss Date, Date of Incident, Incident Date, Date of Loss]
+    aliases: [Loss Date, Date of Incident, Incident Date, Date Loss Occurred]
     required: true
     type: date
+    # NOTE: This is the date the LOSS/INCIDENT actually occurred —
+    # NOT the date the claim was filed or reported.
+    # If the document only has one date and it is labelled as the filing/received date,
+    # leave this field empty rather than duplicating Date Filed.
 
   - name: Time of Loss
     aliases: [Time of Loss, Approximate Time of Loss, Time of Incident, Time (approx.)]
@@ -145,9 +157,14 @@ entities:
     type: date
 
   - name: Location of Loss
-    aliases: [Location of Incident, Loss Location, Incident Location, Location of Loss, Address of Loss]
+    aliases: [Location of Incident, Loss Location, Incident Location, Address of Loss, Scene of Loss, Where Did the Loss Occur]
     required: false
     type: address
+    # NOTE: This is the ADDRESS WHERE THE INCIDENT OCCURRED — the physical scene.
+    # It may be the same as the Insured Address (e.g. home fire) or different (e.g. auto accident).
+    # Extract it from fields labelled specifically as incident/loss location.
+    # Do NOT duplicate Insured Address here unless the form explicitly states the loss
+    # occurred at the insured premises.
 
   - name: Cause of Loss
     aliases: [Cause of Loss, Loss Cause, Peril, Cause of Damage, Type of Loss]
@@ -272,9 +289,12 @@ subtypes:
       type: string
 
     - name: Other Driver Phone
-      aliases: [Other Driver Phone, Other Party Phone]
+      aliases: [Other Driver Phone, Other Party Phone, Other Driver Contact]
       required: false
       type: phone
+      # NOTE: This is EXCLUSIVELY the other/adverse driver's phone number.
+      # It will be different from the policyholder's Phone Number field.
+      # Do NOT use the policyholder phone or any other party's number here.
 
     - name: Other Vehicle
       aliases: [Other Vehicle, "Other Vehicle Year / Make / Model", Adverse Vehicle]

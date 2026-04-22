@@ -1,58 +1,9 @@
 {
-  "48f1e4dea6b9ec8fd1ed77df699358849d648f84ab35488b4d22aefdf7d14d00": {
-    "filename": "FNOL_Commercial_Property_Filled.pdf",
-    "first_seen": "2026-04-22T00:04:09.395050",
-    "sheet_hashes": {
-      "Page 1": "44006b32dfab4098300b7fcbcfebe5ffe08dc42b5ed85eb59c4f2ed44f24b607"
-    }
-  },
-  "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8": {
-    "filename": "FNOL_Homeowners_Property_Filled.pdf",
-    "first_seen": "2026-04-22T00:07:26.466198",
-    "sheet_hashes": {
-      "Page 1": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7"
-    }
-  },
-  "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4": {
-    "filename": "Legal_Civil_Complaint.pdf",
-    "first_seen": "2026-04-22T00:10:14.567011",
-    "sheet_hashes": {
-      "Page 1": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f"
-    }
-  },
-  "6528fcf02e1ddff0548657975d8ea4dd3bc454f363e873801fff172a2fbc84be": {
-    "filename": "FNOL Sample.pdf",
-    "first_seen": "2026-04-22T11:39:57.792674",
-    "sheet_hashes": {
-      "Page 1": "84e7c9bb5dcfbdb659041204c4c59e48b9b7369844e3dd6211b32e04d2b71177"
-    }
-  },
-  "890569c832e58254f08742bcae988b0e7160de87e87d54410c658d0744cce68d": {
-    "filename": "Legal_Sample.pdf",
-    "first_seen": "2026-04-22T11:45:54.373215",
-    "sheet_hashes": {
-      "Page 1": "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071"
-    }
-  },
-  "9319b082771c3d4aab87424e132434be1436b25606eb223293523fb290516959": {
-    "filename": "Sample_Medical_form.pdf",
-    "first_seen": "2026-04-22T11:52:24.399267",
-    "sheet_hashes": {
-      "Page 1": "5d370074196c98703fc391b109338426cec8e4b61041e9a74fd5abff6a600c26"
-    }
-  },
   "2b785f01fe613f0dfcd107c9566d468315fbe1dc4cec966c1b30fc567776791a": {
     "filename": "FNOL_Auto_Vehicle_Filled.pdf",
-    "first_seen": "2026-04-22T11:55:33.580247",
+    "first_seen": "2026-04-22T13:30:25.164087",
     "sheet_hashes": {
       "Page 1": "5e804973c9139d5495d8abe6304899bc1e294344579701d9f1e83d07c207b53a"
-    }
-  },
-  "bd706281a21bc31c0614875434a179cf69680b85e8599d3d3f90c117be146101": {
-    "filename": "Commercial_Auto_Loss_Run.csv",
-    "first_seen": "2026-04-22T12:05:51.768071",
-    "sheet_hashes": {
-      "Sheet1": "7f411551fc971d807f9f9db19de98718126c3356ef48a261d3368ea29b996165"
     }
   }
 }

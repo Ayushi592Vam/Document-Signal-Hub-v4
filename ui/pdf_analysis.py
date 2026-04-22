@@ -1,42 +1,30 @@
 """
-ui/pdf_analysis.py  — v10
+ui/pdf_analysis.py  — v11
 
-Changes from v9:
+Changes from v10:
   ─────────────────────────────────────────────────────────────────────────
-  FIX 1 — Excel Transformation Journey: LLM "Other" cause-of-loss mapping
-    When the Cause of Loss column is empty in the spreadsheet and the LLM
-    enriches it with "Other" (via modules/llm.py), Step 2 of the field
-    timeline now correctly shows "LLM MAPPED" with a clear note that the
-    value was assigned by AI inference (not a direct read), instead of
-    showing the misleading "DIRECT — direct column read" label.
+  FIX A — Bounding box highlights correct line (not the heading above it)
+    The rect_is_wrong validation check previously used a ±20/8 pt expanded
+    clip around the Azure DI polygon.  For court-header style PDFs where the
+    value ("Northern District of Illinois — Eastern Division") sits on the
+    line IMMEDIATELY below the heading ("UNITED STATES DISTRICT COURT"),
+    that expansion was enough to pull the value's tokens into the "nearby"
+    text — so rect_is_wrong stayed False even though the polygon was on the
+    wrong line.
 
-  FIX 2 — Signals tab: supporting verbatim text no longer cropped
-    Added word-break:break-word + overflow-wrap:anywhere + white-space:
-    pre-wrap to the supporting_text container so long verbatim quotes
-    wrap instead of overflowing/being clipped.
+    Fix: the strict validation clip now uses ZERO padding (or ±4 pt only for
+    hair-line bboxes that would otherwise return empty text).  The correction
+    search (PyMuPDF page.search_for) then runs and relocates the highlight to
+    the correct line.
 
-  FIX 3 — Eye button always enabled; explains itself when no bbox
-    The 👁 button is now always clickable. When bounding_polygon is None
-    it opens a new dialog (_no_bbox_popup) that explains:
-      • Why this field was extracted at all (logical justification)
-      • Which pipeline step produced it (LLM Call A / B / Azure DI / sub-row)
-      • Why no bounding box is available (Azure DI path vs KV path)
-    The tooltip also changes from a static string to a contextual message.
+  FIX B — Confidence pill no longer overlaps the extracted value text
+    The pill was drawn directly onto the PDF pixmap at y0 - pill_h - 2.
+    When that coordinate was negative (bbox at top of page), it flipped to
+    y1 + 2 — landing directly on the value text on the very next line.
 
-  FIX 4 — Bounding box: correct coordinate scaling + generous crop
-    _render_bbox_content() recalculated the sx/sy scaling so it correctly
-    maps inch-space polygon coords → PDF point space. Crop padding is now
-    proportional to the bbox size (min 80 pt, max 120 pt) so small fields
-    are never clipped out. The confidence pill is repositioned to stay
-    inside the crop even for top-of-page fields.
-
-  FIX 5 — Bounding box covers full extracted value (date + time fix)
-    When a value like "January 20, 2025 - 6:00 AM" was searched, the old
-    code stripped the time suffix and found only "January 20, 2025", so
-    the highlight rect was too narrow.  Two-part fix:
-      • Full value is now searched FIRST; date-only is a fallback.
-      • After any match, all tokens of val_str are unioned on the same
-        line so the rect always spans the complete value text.
+    Fix: the in-pixmap pill drawing block is removed entirely.  The pill is
+    now rendered as a Streamlit markdown element ABOVE the zoomed image,
+    where it cannot overlap any document content.
   ─────────────────────────────────────────────────────────────────────────
 """
 
@@ -197,7 +185,7 @@ def _synthesize_signals_from_entities(intelligence: dict) -> list[dict]:
         if keyword.lower() in corpus:
             seen.add(dedup_key)
             idx     = corpus.find(keyword.lower())
-            snippet = corpus[max(0, idx - 40): idx + 80].strip().replace("\n", " ")
+            snippet = corpus[max(0, idx - 80): idx + 200].strip().replace("\n", " ")
             signals.append({
                 "type":            sig_type,
                 "severity_level":  severity,
@@ -357,9 +345,6 @@ def _match_score(a: str, b: str) -> float:
     shorter_sig = a_sig if len(a_sig) <= len(b_sig) else b_sig
     longer_sig  = b_sig if len(a_sig) <= len(b_sig) else a_sig
     if shorter_sig and shorter_sig <= (a_sig & b_sig):
-            # Only promote to 0.60 if shorter has 2+ words, OR covers ≥50% of
-            # the longer field's word count — prevents "Other" matching
-            # "Other Driver Phone", "Date" matching "Date Filed", etc.
             coverage = len(shorter_sig) / max(len(longer_sig), 1)
             if len(shorter_sig) >= 2 or coverage >= 0.50:
                 return 0.60
@@ -414,20 +399,6 @@ def _find_azure_match(
     hint_page: int | None = None,
     llm_value: str | None = None,
 ) -> dict | None:
-    """
-    Same as original but with two extra guards:
-
-    Guard A (existing, tightened): reject when LLM value and Azure DI value
-      share NO significant tokens — unchanged from v9.
-
-    Guard B (new): after selecting the best candidate, verify that the
-      candidate's bounding_polygon region text (obtained via PyMuPDF) actually
-      contains at least one token from the LLM value.  If not, strip the
-      polygon from the candidate so the caller falls through to PyMuPDF search.
-      This prevents headings like "PRAYER FOR RELIEF" being used as the bbox
-      for a value like "Jury Trial Demanded".
-    """
-    # --- inline copy of _nk and _match_score so this file is self-contained ---
     def _nk(s: str) -> str:
         if not s:
             return ""
@@ -489,15 +460,12 @@ def _find_azure_match(
     else:
         candidate = max(best_entries, key=lambda e: float(e.get("confidence", 0.0)))
 
-    # Guard A — value token overlap (same as original)
     if llm_value and candidate:
         llm_toks = _sig_tokens(llm_value)
         az_toks  = _sig_tokens(str(candidate.get("value", "")))
         if llm_toks and az_toks and not llm_toks & az_toks:
             return None
 
-    # Guard B (NEW) — verify the polygon region text matches the value
-    # We only do this when a polygon is present and we have a value to check.
     if llm_value and candidate and candidate.get("bounding_polygon"):
         polygon    = candidate["bounding_polygon"]
         page_w_in  = candidate.get("page_width",  8.5)
@@ -528,7 +496,6 @@ def _find_azure_match(
                     xs = [p[0] * sx for p in polygon]
                     ys = [p[1] * sy for p in polygon]
                     clip = fitz.Rect(min(xs), min(ys), max(xs), max(ys))
-                    # Expand slightly to catch adjacent text
                     clip = fitz.Rect(
                         max(0, clip.x0 - 15), max(0, clip.y0 - 5),
                         min(pw_pts, clip.x1 + 15), min(ph_pts, clip.y1 + 5)
@@ -537,10 +504,8 @@ def _find_azure_match(
                     region_toks = _sig_tokens(region_text)
                     llm_toks    = _sig_tokens(llm_value)
 
-                    # If the polygon region shares NO tokens with the value →
-                    # strip polygon so caller falls through to PyMuPDF search
                     if llm_toks and region_toks and not llm_toks & region_toks:
-                        candidate = dict(candidate)   # don't mutate cache
+                        candidate = dict(candidate)
                         candidate["bounding_polygon"] = None
                 doc.close()
             except Exception:
@@ -552,20 +517,8 @@ def _find_azure_match(
 def _try_pymupdf_bbox_for_entity(
     field_info: dict,
     page_num: int,
-    shared_doc=None,        # pre-opened fitz.Document — avoids repeated open/close
+    shared_doc=None,
 ) -> None:
-    """
-    Search the PDF page for the extracted value text and set bounding_polygon.
-
-    Improvements over the original:
-    • Tries the FULL value string first (not just the first 4 words).
-    • When multiple candidate rects are found, picks the one whose surrounding
-      OCR words best overlap the expected value tokens — avoids latching onto a
-      partial keyword that appears in a heading or label.
-    • Falls back progressively: full → first-6-words → first-4-words → first word.
-    • Rejects a match whose OCR text shares NO significant tokens with the value.
-    """
-
     try:
         import fitz
     except ImportError:
@@ -578,7 +531,6 @@ def _try_pymupdf_bbox_for_entity(
     val_toks = _sig_tokens(val_text)
     words    = val_text.split()
 
-    # Use shared doc if provided, otherwise open our own
     _own_doc = False
     if shared_doc is not None:
         doc = shared_doc
@@ -600,15 +552,12 @@ def _try_pymupdf_bbox_for_entity(
         except Exception:
             return
 
-
-    # Build candidate search strings from longest to shortest
     candidates: list[str] = []
     for n in (len(words), 6, 4, 2):
         if n <= len(words):
             s = " ".join(words[:n])
             if s not in candidates:
                 candidates.append(s)
-    # Also try uppercased variants
     for c in list(candidates):
         candidates.append(c.upper())
 
@@ -633,7 +582,6 @@ def _try_pymupdf_bbox_for_entity(
                 continue
 
             for r in rects:
-                # Extract nearby words to validate this rect is the right region
                 pad = fitz.Rect(r.x0 - 20, r.y0 - 5, r.x1 + 20, r.y1 + 5)
                 nearby_words = page.get_text("words", clip=pad)
                 nearby_text  = " ".join(w[4] for w in nearby_words)
@@ -642,15 +590,13 @@ def _try_pymupdf_bbox_for_entity(
                 if val_toks:
                     overlap = len(val_toks & nearby_toks) / len(val_toks)
                 else:
-                    overlap = 1.0  # no tokens to check → accept
+                    overlap = 1.0
 
-                # Prefer higher overlap and longer candidate string
                 score = overlap * len(cand)
                 if score > best_score:
                     best_score = score
                     best_rect  = r
 
-            # If we found a good match (>50% token overlap) stop searching shorter
             if best_rect and best_score >= len(cand) * 0.5:
                 break
 
@@ -692,7 +638,6 @@ def _lookup_confidence(field_name: str, field_info: dict) -> float:
 
 
 def _bbox_covers_too_much(polygon, page_w, page_h, max_fraction=0.25) -> bool:
-    """True if bbox covers more than max_fraction of the page — likely a bad match."""
     if not polygon or not page_w or not page_h:
         return False
     xs = [p[0] for p in polygon]
@@ -706,8 +651,6 @@ def _bbox_covers_too_much(polygon, page_w, page_h, max_fraction=0.25) -> bool:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
-    # Cache the enriched entity list — recomputing on every rerender is expensive
-    # because it opens the PDF via PyMuPDF for Guard B + bbox search per entity.
     _cache_key = f"_intel_entities_{selected_sheet}"
     if _cache_key in st.session_state:
         return st.session_state[_cache_key]
@@ -727,7 +670,6 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
 
     az_lookup = _build_azure_lookup()
     eds       = _edits()
-    # Open PDF once for the whole enrichment pass — shared across all entities
     _tmpdir  = st.session_state.get("tmpdir", "")
     _pdf_path_shared: str | None = None
     _fitz_doc_shared = None
@@ -793,7 +735,6 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
                 field_info["value"]    = az_val
                 field_info["modified"] = eds.get(entity_name, az_val)
 
-            # ── Reject oversized bboxes (false positive key match) ──────────────
             if _bbox_covers_too_much(
                 field_info["bounding_polygon"],
                 field_info["page_width"],
@@ -842,11 +783,7 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
 
         out.append((entity_name, field_info))
 
-    # Deduplicate: remove fields whose (normalized_name, normalized_value) pair
-    # has already been seen — handles cases where core entities and subtype
-    # entities extract the same field under different names (e.g. "Policyholder Name"
-    # and "Legal Business Name" both resolving to the same company name value)
-    seen_values: dict[str, str] = {}   # normalized_value → first field_name seen
+    seen_values: dict[str, str] = {}
     seen_names:  set[str]       = set()
     deduped: list[tuple[str, dict]] = []
     for fname, finfo in out:
@@ -854,11 +791,8 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
         nname    = _nk(fname)
         nval     = val.lower().strip()
 
-        # Always keep if value is empty or unique name
         if not nval or nname not in seen_names:
-            # Check if this value was already captured under a different field name
             if nval and nval in seen_values:
-                # Only skip if the names are semantically similar (aliases of each other)
                 existing_name = seen_values[nval]
                 if _match_score(_nk(existing_name), nname) >= 0.40:
                     seen_names.add(nname)
@@ -881,14 +815,10 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TRACEABILITY HELPER — returns human-readable extraction source for journey tab
+# TRACEABILITY HELPER
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
-    """
-    Returns (icon, label, detail) describing how this field was actually extracted.
-    """
-
     is_user_added  = field_info.get("_user_added", False)
     from_call_b    = field_info.get("_from_call_b", False)
     adi_matched    = field_info.get("_adi_matched", False)
@@ -961,17 +891,10 @@ def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX 3 — WHY THIS FIELD EXISTS: explanation for fields without bbox
+# FIX 3 — WHY THIS FIELD EXISTS
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _field_justification(field_name: str, field_info: dict) -> tuple[str, str]:
-    """
-    Returns (why_extracted, why_no_bbox) — both plain English.
-
-    why_extracted: why this field is shown at all (what schema / doc type
-                   logic makes it relevant to a claims handler)
-    why_no_bbox:   the technical reason no bounding polygon is available
-    """
     from_intel  = field_info.get("_from_intelligence", False)
     from_call_b = field_info.get("_from_call_b", False)
     adi_matched = field_info.get("_adi_matched", False)
@@ -979,7 +902,6 @@ def _field_justification(field_name: str, field_info: dict) -> tuple[str, str]:
     is_user     = field_info.get("_user_added", False)
     value       = field_info.get("value", "")
 
-    # ── WHY EXTRACTED ─────────────────────────────────────────────────────────
     fn_lower = field_name.lower()
     if is_user:
         why_extracted = (
@@ -1047,7 +969,6 @@ def _field_justification(field_name: str, field_info: dict) -> tuple[str, str]:
             f"key-value pair in the PDF layout."
         )
 
-    # ── WHY NO BBOX ───────────────────────────────────────────────────────────
     if is_user:
         why_no_bbox = (
             "Manually added fields never have a bounding box because they were not "
@@ -1200,40 +1121,31 @@ def _sync_edit(field_name: str, new_value: str, selected_sheet: str) -> None:
         })
 
     st.session_state.pop("_adi_lookup", None)
-    # Invalidate entity cache so bbox enrichment reruns with fresh edits
     for k in list(st.session_state.keys()):
         if k.startswith("_intel_entities_"):
             st.session_state.pop(k, None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX 4 + FIX 5 — BOUNDING BOX POPUP
+# BOUNDING BOX POPUP  (FIX A + FIX B applied here)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> None:
     """
     Render the zoomed PDF crop with highlighted bounding box.
 
-    FIX A — Label-vs-value mismatch:
-      If the polygon region contains the field label but not the value,
-      fall back to page.search_for() for the actual value text.
+    FIX A (v11) — Tight rect validation clip:
+      The check_clip used to validate "does this rect contain the value?" now
+      uses ZERO padding (±4 pt only for hair-line bboxes).  Previously the
+      ±20/8 pt expansion pulled adjacent lines into region_text, causing
+      rect_is_wrong to stay False even when the polygon was on the wrong line
+      (e.g. heading "UNITED STATES DISTRICT COURT" vs value
+      "Northern District of Illinois — Eastern Division").
 
-    FIX B — Wrong value for short/numeric fields (phone, code, date):
-      Use exact digit-string comparison, not token overlap.
-      If digits don't match, search ALL pages (not just source_page).
-
-    FIX C — Expand bbox for long multi-line values:
-      After a fallback search hit, expand the rect downward by up to 6 line
-      heights to cover a reasonable portion of a paragraph value.
-
-    FIX D — Boolean / very short values ("Yes", "No", True/False):
-      Expand horizontally to include the checkbox label context.
-
-    FIX E (new) — Full value coverage for date+time and similar compound values:
-      Full value string is searched FIRST; date-only stripped variant is only
-      a fallback.  After any match, every token of val_str is searched on the
-      same line and the rects are unioned so the highlight always spans the
-      complete extracted text (e.g. "January 20, 2025 — 6:00 AM").
+    FIX B (v11) — Confidence pill as Streamlit markdown:
+      The in-pixmap pill drawing block is removed.  The pill is rendered as a
+      Streamlit markdown element above the zoomed image so it can never overlap
+      the document text.
     """
     import streamlit as st
     import re as _re
@@ -1313,7 +1225,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         pw_pts  = page.rect.width
         ph_pts  = page.rect.height
 
-        # Correct scaling: polygon stored in inches → PDF points
         sx = pw_pts / page_width   if page_width  > 0 else 72.0
         sy = ph_pts / page_height  if page_height > 0 else 72.0
 
@@ -1322,7 +1233,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         ys  = [p[1] for p in pts]
         x0, y0, x1, y1 = min(xs), min(ys), max(xs), max(ys)
 
-        # Clamp to page bounds
         x0 = max(0.0, min(x0, pw_pts))
         y0 = max(0.0, min(y0, ph_pts))
         x1 = max(0.0, min(x1, pw_pts))
@@ -1333,17 +1243,17 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             y1 = y0 + max(4.0, ph_pts * 0.02)
 
         # ─────────────────────────────────────────────────────────────────────
-        # VALIDATION: does this rect actually contain the extracted value?
+        # FIX A — TIGHT CLIP for rect_is_wrong check
         # ─────────────────────────────────────────────────────────────────────
         val_str      = (extracted_value or "").strip()
         val_lower    = val_str.lower()
         val_toks     = _sig_tokens(val_str)
         val_digits   = _digits_only(val_str)
         is_boolean   = val_lower in {"yes", "no", "true", "false"}
-        is_short     = len(val_str) <= 40   # phone/code/date/boolean
+        is_short     = len(val_str) <= 40
         corrected    = False
         rect_is_wrong = False
-        display_page = source_page          # may change if value found on different page
+        display_page = source_page
 
         # ── BOOLEAN SPECIAL CASE ──────────────────────────────────────────────
         if is_boolean and val_str:
@@ -1415,7 +1325,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                 x0, y0, x1, y1 = best_r.x0, best_r.y0, best_r.x1, best_r.y1
                 corrected = True
 
-            # Expand horizontally to show the full checkbox row context
             row_pad = pw_pts * 0.15
             x0 = max(0.0,    x0 - row_pad)
             x1 = min(pw_pts, x1 + row_pad)
@@ -1423,21 +1332,26 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             y1 = min(ph_pts, y1 + 8)
 
         elif val_str:
-            # ── NON-BOOLEAN VALIDATION ────────────────────────────────────────
+            # ── FIX A: TIGHT clip — zero padding so adjacent lines cannot
+            #    contribute tokens to the rect_is_wrong check.
+            #    Only widen by ±4 pt for hair-line bboxes that would otherwise
+            #    return empty text.
+            _bbox_w = x1 - x0
+            _bbox_h = y1 - y0
+            _pad_x  = 4.0 if _bbox_w < 8 else 0.0
+            _pad_y  = 4.0 if _bbox_h < 8 else 0.0
             check_clip    = fitz.Rect(
-                max(0, x0 - 20), max(0, y0 - 8),
-                min(pw_pts, x1 + 20), min(ph_pts, y1 + 8)
+                max(0, x0 - _pad_x), max(0, y0 - _pad_y),
+                min(pw_pts, x1 + _pad_x), min(ph_pts, y1 + _pad_y)
             )
             region_text   = page.get_text("text", clip=check_clip).strip()
             region_lower  = region_text.lower()
             region_digits = _digits_only(region_text)
 
-            # Determine if the stored rect is wrong
             if is_short:
                 if val_digits and len(val_digits) >= 7 and len(val_str) <= 20:
                     rect_is_wrong = val_digits not in region_digits
                 elif len(val_str) >= 8:
-                    # Strict check for dates: require full value OR date-only part
                     _date_only_check = ""
                     if " - " in val_str:
                         _date_only_check = val_str.split(" - ")[0].strip().lower()
@@ -1460,7 +1374,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     rect_is_wrong = False
 
             if rect_is_wrong:
-                # Search all pages (source page first) for the actual value
                 pages_to_search = (
                     [source_page - 1]
                     + [i for i in range(total_pages) if i != source_page - 1]
@@ -1470,7 +1383,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                 if is_short:
                     import re as _re2
 
-                    # Strip time portion for date values — used as FALLBACK only
                     date_only = val_str
                     if " - " in val_str:
                         date_only = val_str.split(" - ")[0].strip()
@@ -1481,7 +1393,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
 
                     search_candidates: list[str] = []
 
-                    # ── FIX 5: phone-stripped name first (name-only before full) ──
                     phone_stripped = _re2.sub(
                         r"\s*[\(\-\.]?\d{3}[\)\-\.\s]\s*\d{3}[\-\.\s]\d{4}.*$",
                         "", val_str
@@ -1489,16 +1400,12 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     if phone_stripped and phone_stripped != val_str and len(phone_stripped) > 6:
                         search_candidates.append(phone_stripped)
 
-                    # ── FIX 5: FULL value first — ensures "January 20, 2025 - 6:00 AM"
-                    #    is tried before the stripped "January 20, 2025" variant ──────
                     search_candidates += [val_str, val_str.upper(), val_str.lower()]
 
-                    # date-only as FALLBACK when full string isn't found verbatim
                     if date_only and date_only != val_str:
                         search_candidates.append(date_only)
                         search_candidates.append(date_only.upper())
 
-                    # Deduplicate preserving order
                     seen_c: set[str] = set()
                     search_candidates = [
                         c for c in search_candidates
@@ -1573,7 +1480,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     new_x1 = best_r.x1
                     new_y1 = best_r.y1
 
-                    # Expand for long paragraph values
                     if not is_short and len(words) > 6:
                         line_h      = best_r.height or 12
                         expand_up   = min(line_h * 3, new_y0)
@@ -1583,10 +1489,7 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                         new_x0      = max(0, new_x0 - 40)
                         new_x1      = min(pw_pts, pw_pts - 20)
 
-                    # ── FIX 5: union all same-line token rects to cover full value ──
-                    # When we matched via a partial candidate (e.g. date-only), the
-                    # remaining tokens ("— 6:00 AM") sit to the right on the same row.
-                    # We search every token of val_str and union rects on the same line.
+                    # Union same-line token rects to cover full value
                     _expand_page = doc[best_page_i]
                     _line_tol    = (best_r.height or 12) * 0.6
                     _ux0 = new_x0
@@ -1605,15 +1508,14 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                                 _ux1 = max(_ux1, _tr.x1)
                                 _uy1 = max(_uy1, _tr.y1)
                     new_x0, new_y0, new_x1, new_y1 = _ux0, _uy0, _ux1, _uy1
-                    # ── end FIX 5 ─────────────────────────────────────────────
 
                     x0, y0, x1, y1 = new_x0, new_y0, new_x1, new_y1
                     corrected = True
 
-        # If rect was wrong and correction failed, don't show a misleading highlight
         if rect_is_wrong and not corrected:
             st.warning(
                 "⚠ The stored bounding box does not match the extracted value, "
+                "and the value could not be located in the PDF text layer. "
                 "This typically means the value was inferred by the LLM from context "
                 "rather than read from a labelled field. The extracted value is still valid."
             )
@@ -1633,26 +1535,9 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         )
         shape.commit()
 
-        # ── Confidence pill ───────────────────────────────────────────────────
-        if conf_pct > 0:
-            label      = f"  {conf_pct}% confidence  "
-            pill_w     = len(label) * 5.6
-            pill_h     = 15.0
-            pill_y_top = y0 - pill_h - 2
-            if pill_y_top < 0:
-                pill_y_top = y1 + 2
-            pill_y_bot = pill_y_top + pill_h
-            lrect = fitz.Rect(x0, pill_y_top, x0 + pill_w, pill_y_bot)
-            pill  = page.new_shape()
-            pill.draw_rect(lrect)
-            pill.finish(color=conf_rgb, fill=conf_rgb, fill_opacity=0.93, width=0)
-            pill.commit()
-            page.insert_text(
-                fitz.Point(x0 + 3, pill_y_bot - 3),
-                f"{conf_pct}% confidence",
-                fontsize=8,
-                color=(1.0, 1.0, 1.0),
-            )
+        # ── FIX B: Confidence pill is NO LONGER drawn onto the PDF pixmap.
+        #    It is rendered as a Streamlit markdown element below (after the
+        #    header div, before st.image) so it cannot overlap document text.
 
         # ── Crop with generous padding ────────────────────────────────────────
         box_w = x1 - x0
@@ -1681,6 +1566,7 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                 "⚡ bbox auto-corrected to value location</span>"
             )
 
+        # ── Zoomed view header ────────────────────────────────────────────────
         st.markdown(
             f"<div style='font-size:11px;font-weight:700;color:{_TXT2};"
             f"font-family:monospace;text-transform:uppercase;letter-spacing:1.5px;"
@@ -1689,6 +1575,21 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             + "</div>",
             unsafe_allow_html=True,
         )
+
+        # ── FIX B: Confidence pill rendered as Streamlit markdown ─────────────
+        # Placed ABOVE the image so it never overlaps document content.
+        if conf_pct > 0:
+            c_pill  = "#16a34a" if conf_pct >= 80 else "#ca8a04" if conf_pct >= 60 else "#dc2626"
+            bg_pill = "#f0fdf4" if conf_pct >= 80 else "#fefce8" if conf_pct >= 60 else "#fef2f2"
+            st.markdown(
+                f"<div style='display:inline-block;background:{bg_pill};"
+                f"border:1px solid {c_pill}60;border-radius:20px;"
+                f"padding:4px 14px;font-size:11px;font-weight:700;"
+                f"color:{c_pill};font-family:monospace;margin-bottom:8px;'>"
+                f"🎯 {conf_pct}% confidence</div>",
+                unsafe_allow_html=True,
+            )
+
         st.image(pix_zoom.tobytes("png"), use_container_width=True)
 
         with st.expander("📄 Full Page View"):
@@ -1704,17 +1605,10 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX 3 — NO-BBOX POPUP: explains WHY field exists + why no bbox
+# FIX 3 — NO-BBOX POPUP
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
-    """
-    Shown when the eye button is clicked for a field with no bounding polygon.
-    Explains:
-      1. Why this field was extracted at all (business / schema logic)
-      2. How it was extracted (pipeline step)
-      3. Why no bounding box is available (technical reason)
-    """
     _esl_result = _extraction_source_label(field_info)
     icon          = _esl_result[0] if len(_esl_result) > 0 else "📋"
     source_label  = _esl_result[1] if len(_esl_result) > 1 else "Unknown"
@@ -1725,7 +1619,6 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
     conf_pct                          = int(confidence * 100)
     source_page                       = field_info.get("source_page", 1)
 
-    # Header
     st.markdown(
         f"<div style='background:#fef9c3;border:1px solid #fde047;"
         f"border-left:4px solid #ca8a04;border-radius:8px;"
@@ -1743,7 +1636,6 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # Section 1 — Why this field was extracted
     st.markdown(
         f"<div style='background:{_BG};border:1px solid {_BORDER};"
         f"border-radius:8px;padding:14px 16px;margin-bottom:12px;'>"
@@ -1756,7 +1648,6 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # Section 2 — How it was extracted (pipeline step)
     st.markdown(
         f"<div style='background:{_BG};border:1px solid {_BORDER};"
         f"border-radius:8px;padding:14px 16px;margin-bottom:12px;'>"
@@ -1780,7 +1671,6 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # Section 3 — Why no bounding box
     st.markdown(
         f"<div style='background:#fef2f2;border:1px solid #fecaca;"
         f"border-left:4px solid #dc2626;border-radius:8px;"
@@ -1794,7 +1684,6 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # Transformation journey summary
     _esl_result2 = _extraction_source_label(field_info)
     icon2   = _esl_result2[0] if len(_esl_result2) > 0 else "📋"
     label2  = _esl_result2[1] if len(_esl_result2) > 1 else "Unknown"
@@ -1806,7 +1695,6 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
         f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
         f"margin-bottom:8px;'>🔄 Transformation Journey Summary</div>"
         f"<div style='display:flex;flex-direction:column;gap:6px;'>"
-        # Step 1
         f"<div style='display:flex;gap:10px;align-items:flex-start;'>"
         f"<div style='width:20px;height:20px;border-radius:50%;background:#16a34a20;"
         f"border:2px solid #16a34a;display:flex;align-items:center;justify-content:center;"
@@ -1814,15 +1702,13 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
         f"<div style='font-size:11px;color:{_TXT2};font-family:monospace;'>"
         f"<span style='color:#16a34a;font-weight:700;'>Azure DI parsed the PDF</span>"
         f" — raw text and KV pairs extracted</div></div>"
-        # Step 2
         f"<div style='display:flex;gap:10px;align-items:flex-start;'>"
         f"<div style='width:20px;height:20px;border-radius:50%;background:#7c3aed20;"
         f"border:2px solid #7c3aed;display:flex;align-items:center;justify-content:center;"
         f"font-size:9px;font-weight:700;color:#7c3aed;flex-shrink:0;'>2</div>"
         f"<div style='font-size:11px;color:{_TXT2};font-family:monospace;'>"
         f"<span style='color:#7c3aed;font-weight:700;'>{icon2} {label2}</span>"
-        f" — {detail2[:120]}{'…' if len(detail2) > 120 else ''}</div></div>"
-        # Step 3 — bbox attempt
+        f" — {detail2}</div></div>"
         f"<div style='display:flex;gap:10px;align-items:flex-start;'>"
         f"<div style='width:20px;height:20px;border-radius:50%;background:#dc262620;"
         f"border:2px solid #dc2626;display:flex;align-items:center;justify-content:center;"
@@ -1844,7 +1730,6 @@ if _HAS_DIALOG:
 
     @st.dialog("🔍 Field Extraction Details", width="large")
     def _no_bbox_popup(field_name: str, field_info: dict) -> None:
-        """FIX 3 — shown when eye button clicked but no bounding polygon exists."""
         _render_no_bbox_content(field_name, field_info)
 
 else:
@@ -2011,11 +1896,9 @@ def _render_entities_tab(
     for field_name, field_info in intel_fields:
         extracted  = field_info.get("value", "")
 
-        # Skip boolean Yes/No fields — not shown in the entities table
         if (extracted or "").strip().lower() in {"yes", "no", "true", "false"}:
             continue
 
-        # Skip compound name+phone fields entirely
         import re as _re_skip
         if (
             _re_skip.search(r"\d{3}[\)\-\.\s]\s*\d{3}[\-\.\s]\d{4}", extracted or "")
@@ -2095,27 +1978,31 @@ def _render_entities_tab(
                         st.session_state[_EM_KEY].add(field_name)
                     st.rerun()
 
+            # AFTER:
+            # AFTER:
             with beye:
-                if has_bbox:
-                    tip = f"View field location in document · Confidence: {conf_pct}%"
-                else:
-                    tip = "No bounding box — click to understand why this field was extracted"
-
-                if st.button("👁", key=f"_pbtn_eye_{field_name}", help=tip,
-                             use_container_width=True):
-                    if has_bbox:
-                        _bbox_pending_name = field_name
-                        _bbox_pending_info = field_info
-                    else:
-                        _no_bbox_pending_name = field_name
-                        _no_bbox_pending_info = field_info
+               _is_txt = st.session_state.get("_pdf_intelligence", {}).get("source") == "txt"
+               if not _is_txt:
+                  if has_bbox:
+                     tip = f"View field location in document · Confidence: {conf_pct}%"
+                  else:
+                     tip = "No bounding box — click to understand why this field was extracted"
+                  if st.button("👁", key=f"_pbtn_eye_{field_name}", help=tip,
+                     use_container_width=True):
+                     if has_bbox:
+                         _bbox_pending_name = field_name
+                         _bbox_pending_info = field_info
+                     else:
+                         _no_bbox_pending_name = field_name
+                         _no_bbox_pending_info = field_info
+               else:  
+                  st.empty()
 
         st.markdown(
             f"<div style='height:1px;background:{_BORDER};margin:2px 0 4px 0;'></div>",
             unsafe_allow_html=True,
         )
 
-    # Open whichever popup was requested this render cycle
     if _bbox_pending_name and _bbox_pending_info is not None:
         _bbox_popup(_bbox_pending_name, _bbox_pending_info, pdf_path or "")
     elif _no_bbox_pending_name and _no_bbox_pending_info is not None:
@@ -2482,7 +2369,7 @@ def _render_summary_tab(intelligence: dict, selected_sheet: str) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TAB 3 — SIGNALS  (FIX 2: supporting_text no longer cropped)
+# TAB 3 — SIGNALS
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _classify_severity(sig: dict, doc_type: str = "") -> str:
@@ -2588,7 +2475,6 @@ def _render_signals_tab(intelligence: dict) -> None:
                 f"AI</span>"
             )
 
-            # FIX 2 — supporting_text: full text shown, wraps correctly
             supporting_text = sig.get("supporting_text", "")
             supporting_html = ""
             if supporting_text:
@@ -2740,7 +2626,6 @@ def _render_raw_json_tab(intelligence: dict, selected_sheet: str) -> None:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB 5 — TRANSFORMATION JOURNEY
-# (FIX 1: LLM-assigned "Other" for Cause of Loss correctly shown as LLM MAPPED)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_journey_tab(
@@ -2787,9 +2672,9 @@ def _render_journey_tab(
         f"padding:8px 0;border-bottom:1px solid {_BORDER};align-items:start;'>"
         f"<span style='font-size:10px;font-weight:700;color:#7c3aed;"
         f"font-family:monospace;text-transform:uppercase;letter-spacing:.8px;'>"
-        f"🤖 LLM</span>"
+        f"Entities + signals</span>"
         f"<span style='font-size:11px;color:{_TXT2};font-family:monospace;'>"
-        f"→ extracted entities + signals. "
+        
         f"Azure DI bounding boxes matched by field name similarity.</span></div>"
         f"<div style='display:grid;grid-template-columns:160px 1fr;gap:8px;"
         f"padding:8px 0;align-items:start;'>"
@@ -2819,18 +2704,11 @@ def _render_journey_tab(
         )
 
     def _source_step_html(step_n: int, field_info: dict, step1_ts: str) -> str:
-        """
-        Step 2 of the transformation timeline.
-
-        FIX 1: detects LLM-assigned "Other" for Cause of Loss.
-        """
-
         _esl_result = _extraction_source_label(field_info)
         icon   = _esl_result[0] if len(_esl_result) > 0 else "📋"
         label  = _esl_result[1] if len(_esl_result) > 1 else "Unknown"
         detail = _esl_result[2] if len(_esl_result) > 2 else ""
 
-        # ── FIX 1 — detect LLM-assigned "Other" for Cause of Loss ────────────
         field_name_str = field_info.get("_field_name_hint", "")
         raw_value      = field_info.get("value", "")
 
@@ -2858,7 +2736,6 @@ def _render_journey_tab(
                 f"Review the document narrative to confirm or override this classification."
             )
 
-        # Colour the step circle based on resolved source
         if field_info.get("_user_added"):
             step_color = "#7c3aed"
         elif _llm_assigned_other:
@@ -2891,10 +2768,7 @@ def _render_journey_tab(
             f"<span style='font-size:9px;color:{_LBL};font-family:monospace;'>"
             f"⏱ {step1_ts} · {key_str}{conf_str}</span>"
             f"</div>"
-            f"<div style='font-size:11px;color:{_LBL};font-family:monospace;"
-            f"line-height:1.6;background:{_BG2};border:1px solid {_BORDER};"
-            f"border-radius:4px;padding:6px 10px;"
-            f"white-space:pre-wrap;word-break:break-word;'>{detail}</div>"
+            
             f"</div></div>"
         )
 
@@ -2924,8 +2798,6 @@ def _render_journey_tab(
             f"<div style='font-size:12px;font-weight:700;color:{_TXT};"
             f"font-family:monospace;text-transform:uppercase;letter-spacing:1px;"
             f"margin-bottom:14px;'>{fname}{mod_badge}</div>"
-
-            # Step 1 — Azure DI / PDF parse
             f"<div style='display:flex;gap:12px;margin-bottom:10px;'>"
             f"{_step_circle(1,'#16a34a')}"
             f"<div style='flex:1;'>"
@@ -2955,10 +2827,10 @@ def _render_journey_tab(
             + f"</div></div>"
         )
 
-        # Step 2 — Actual extraction source (with FIX 1 LLM-Other detection)
-        html += _source_step_html(2, finfo, step1_ts)
+        _is_txt_src = st.session_state.get("_pdf_intelligence", {}).get("source") == "txt"
+        if not _is_txt_src:
+           html += _source_step_html(2, finfo, step1_ts)
 
-        # Step 3+ — User edits
         for i, ch in enumerate(changes):
             ts     = (ch.get("timestamp", "")[:19] or "").replace("T", " ")
             from_v = ch.get("from", "")

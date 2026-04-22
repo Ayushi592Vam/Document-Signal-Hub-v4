@@ -854,3 +854,49 @@ def _parse_legacy_layout_plain(sheet_type: str, rows: list) -> tuple[list, str]:
         extracted.append(pending_claim)
 
     return extracted, sheet_type
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TXT / TRANSCRIPT PARSER
+# ─────────────────────────────────────────────────────────────────────────────
+
+def parse_txt_file(file_bytes: bytes, filename: str) -> dict:
+    """
+    Parse a plain-text file (FNOL transcripts, call notes, typed reports).
+    Returns a parsed dict in the same shape as parse_pdf_with_azure() so
+    the rest of the pipeline (intelligence, signals, entities) works unchanged.
+    """
+    try:
+        text = file_bytes.decode("utf-8", errors="replace")
+    except Exception:
+        text = ""
+
+    lines      = text.splitlines()
+    clean_text = text.strip()
+
+    # Detect if this is a conversation/transcript (speaker: pattern)
+    _speaker_re = re.compile(r"^[A-Za-z0-9 _\-\(\)]{1,40}:\s*$")
+    is_transcript = sum(1 for ln in lines if _speaker_re.match(ln.strip())) >= 2
+
+    page_num = 1
+    pages    = []
+    # Split into ~50-line virtual "pages" so the rest of the UI handles it normally
+    chunk_size = 50
+    for i in range(0, max(1, len(lines)), chunk_size):
+        chunk = "\n".join(lines[i: i + chunk_size])
+        pages.append({
+            "page_num":  page_num,
+            "raw_text":  chunk,
+            "fields":    [],          # no Azure DI fields for plain text
+            "tables":    [],
+            "is_transcript": is_transcript,
+        })
+        page_num += 1
+
+    return {
+        "pages":        pages,
+        "source":       "txt",
+        "filename":     filename,
+        "is_transcript": is_transcript,
+        "full_text":    clean_text,
+    }    

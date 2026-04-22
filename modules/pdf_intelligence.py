@@ -465,7 +465,6 @@ For type_specific, extract ONLY these assessment fields (skip any not present):
 
 
 def _validation_system(doc_type: str, subtype: str | None = None) -> str:
-    """Build the validation system prompt from config — uses enhanced model."""
     role          = get_role(doc_type)
     entity_fields = build_entity_field_list(doc_type, subtype)
     signal_types  = get_signal_types(doc_type)
@@ -483,8 +482,38 @@ Expected fields for a {doc_type}{f' ({subtype})' if subtype else ''} document:
 
 Expected signal types: {signal_types}
 
-Be precise, critical, and actionable. Identify specific errors by field name.
-Score each dimension 0-100 (100 = perfect).
+═══════════════════════════════════════════════════════
+CRITICAL RULES — MUST FOLLOW BEFORE EVALUATING:
+═══════════════════════════════════════════════════════
+
+EXTRACTION ACCURACY:
+  • A field is CORRECT if its value appears verbatim or as a clear
+    abbreviation/equivalent in the DOCUMENT TEXT. Do NOT penalise for
+    formatting differences (e.g. "$3,250,000.00" vs "THREE MILLION..."),
+    abbreviations ("N.D. Ill." = "Northern District of Illinois"),
+    or partial matches where the extracted value is a valid subset of a
+    longer document string.
+  • Only mark a field INCORRECT if the document text EXPLICITLY shows a
+    DIFFERENT value for that field. Never invent an "expected" value from
+    your own knowledge — only use what is in the provided document text.
+  • "incorrect_fields" must ONLY contain entries where you can directly
+    quote the conflicting evidence from the document text. If you cannot
+    quote contradicting text, do NOT include it.
+  • If a field is absent from the document entirely, list it in
+    missed_fields — not incorrect_fields.
+
+SIGNAL CREDIBILITY:
+  • Only flag a signal as a false positive if the document text clearly
+    contradicts it. Severity signals (death, fatality, injury) are credible
+    if mentioned anywhere in the document.
+
+COVERAGE ANALYSIS:
+  • Only list a field in "gaps" if it is expected for this doc type AND
+    genuinely absent from both the extraction AND the document text.
+
+SCORING:
+  • Start at 100. Deduct ONLY for confirmed errors backed by document evidence.
+  • Never deduct for formatting differences or absent-but-plausible fields.
 
 {_VALIDATION_SCHEMA}
 """).strip()
@@ -698,13 +727,13 @@ def run_validation(
         + f"\n\nEXTRACTED ENTITIES:\n{entity_summary}\n\n"
         + f"DETECTED SIGNALS:\n{signal_summary}"
         + adi_summary
-        + f"\n\n--- DOCUMENT TEXT (truncated) ---\n{full_text[:2500]}"
+        + f"\n\n--- DOCUMENT TEXT (use this as ground truth for all comparisons) ---\n{full_text[:4000]}"
     )
 
     result = _llm_call(
         system_prompt=_validation_system(doc_type, subtype),
         user_prompt=user_prompt,
-        max_tokens=2000,
+        max_tokens=3000,
         label="validation",
         use_enhanced=True,
     )

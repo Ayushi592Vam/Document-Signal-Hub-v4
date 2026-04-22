@@ -1,17 +1,7 @@
 {
-  "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f": {
-    "path": "feature_store/claims_json\\Page 1_20260422_154733.json",
-    "sheet_name": "Page 1",
-    "saved_at": "2026-04-22T15:47:33.456525"
-  },
-  "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071": {
-    "path": "feature_store/claims_json\\Page 1_20260422_155301.json",
-    "sheet_name": "Page 1",
-    "saved_at": "2026-04-22T15:53:01.578520"
-  },
-  "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc": {
-    "path": "feature_store/claims_json\\Page 1_20260422_155435.json",
-    "sheet_name": "Page 1",
-    "saved_at": "2026-04-22T15:54:35.811420"
+  "084673364fcbb2749a4b4ff87324ccee29daafcb656628c9d12d5c1700ecc17b": {
+    "path": "feature_store/claims_json\\Transcript_20260422_175412.json",
+    "sheet_name": "Transcript",
+    "saved_at": "2026-04-22T17:54:12.282773"
   }
 }

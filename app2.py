@@ -308,8 +308,8 @@ if st.session_state.get("_open_journey_dialog"):
 _, col_sheet_dropdown = st.columns([6.8, 1.2])
 
 uploaded = st.file_uploader(
-    "Upload Excel/CSV/PDF",
-    type=["xlsx", "csv", "pdf"],
+    "Upload Excel/CSV/PDF/TXT",
+    type=["xlsx", "csv", "pdf", "txt"],
     accept_multiple_files=False,
     key="main_uploader",
 )
@@ -348,9 +348,22 @@ if st.session_state.get("last_uploaded") != _upload_fingerprint:
                 st.session_state.pop(_k, None)
     elif file_ext == ".docx":
         st.session_state.sheet_names = ["Document"]
+
+    # ADD this alongside your existing elif blocks:
+    # AFTER:
+    elif file_ext == ".txt":
+       from modules.parsing import parse_txt_file
+       from modules.pdf_intelligence import run_pdf_intelligence
+       file_bytes = open(excel_path, "rb").read()
+       parsed = parse_txt_file(file_bytes, uploaded.name)
+       intelligence = run_pdf_intelligence(parsed)
+       intelligence["source"] = "txt"
+       st.session_state["_pdf_intelligence"]      = intelligence
+       st.session_state["_pdf_intelligence_file"] = excel_path
+       st.session_state["sheet_names"]            = ["Transcript"]   
     else:
         st.session_state.sheet_names = get_sheet_names(excel_path)
-
+    
     st.session_state.sheet_cache  = {}
     st.session_state.selected_idx = 0
     st.session_state.focus_field  = None
@@ -375,12 +388,17 @@ if st.session_state.get("last_uploaded") != _upload_fingerprint:
     file_hash = _compute_file_sha256(excel_path)
     file_ext  = os.path.splitext(excel_path)[1].lower()
 
-    if file_ext in [".docx", ".pdf", ".csv"]:
+    if file_ext == ".txt":
+    # .txt files don't have sheets — use file-level hash as the sheet hash
         sheet_hashes = {
-            st.session_state.sheet_names[0]: _compute_sheet_sha256(
-                excel_path, st.session_state.sheet_names[0]
-            )
-        }
+           st.session_state.sheet_names[0]: _compute_file_sha256(excel_path)
+    }
+    elif file_ext in [".docx", ".pdf", ".csv"]:
+        sheet_hashes = {
+           st.session_state.sheet_names[0]: _compute_sheet_sha256(
+            excel_path, st.session_state.sheet_names[0]
+        )
+    }
     else:
         sheet_hashes = {
             sn: _compute_sheet_sha256(excel_path, sn)
@@ -566,6 +584,19 @@ if selected_sheet not in st.session_state.sheet_cache:
                     sh_hash = None
                 sheet_hashes = {selected_sheet: sh_hash}
 
+
+            # ── TXT / Transcript branch ───────────────────────────────────────────────────
+            elif file_ext == ".txt":
+                 data            = []
+                 sheet_type      = "TXT_TRANSCRIPT"
+                 merged_meta     = {}
+                 totals_data     = {}
+                 total_rows      = 0
+                 total_cols      = 0
+                 _col_rename_log = {}
+                 _doc_type_enum  = None
+                 _title_flds     = {}    
+
             # ── Excel / CSV branch ────────────────────────────────────────────
             else:
                 _doc_type_enum = None
@@ -707,7 +738,7 @@ _from_cache  = active.get("_from_cache", False)
 
 # ── Ensure PDF intelligence runs even when sheet data loaded from cache ───────
 if file_ext == ".pdf" and st.session_state.get("_pdf_intelligence_file") != excel_path:
-    with st.spinner("🧠 Running AI document analysis…"):
+    with st.spinner("🧠 Running document analysis…"):
         try:
             from modules.pdf_intelligence import run_pdf_intelligence
             from modules.pdf_azure_parser import parse_pdf_with_azure
@@ -725,8 +756,11 @@ if file_ext == ".pdf" and st.session_state.get("_pdf_intelligence_file") != exce
 
 # ── Determine if this PDF needs the intelligence panel ────────────────────────
 _intelligence    = st.session_state.get("_pdf_intelligence", {})
-_pdf_doc_type    = _intelligence.get("doc_type", "") if file_ext == ".pdf" else ""
-_use_intel_panel = file_ext == ".pdf" and _pdf_doc_type in _PDF_INTELLIGENCE_TYPES
+_pdf_doc_type    = _intelligence.get("doc_type", "") if file_ext in (".pdf", ".txt") else ""
+_use_intel_panel = (
+    (file_ext == ".pdf" and _pdf_doc_type in _PDF_INTELLIGENCE_TYPES)
+    or file_ext == ".txt"
+)
 
 
 # ── Auto-normalize ────────────────────────────────────────────────────────────

@@ -541,7 +541,11 @@ def _find_azure_match(
     return candidate
 
 
-def _try_pymupdf_bbox_for_entity(field_info: dict, page_num: int) -> None:
+def _try_pymupdf_bbox_for_entity(
+    field_info: dict,
+    page_num: int,
+    shared_doc=None,        # pre-opened fitz.Document — avoids repeated open/close
+) -> None:
     """
     Search the PDF page for the extracted value text and set bounding_polygon.
  
@@ -553,29 +557,41 @@ def _try_pymupdf_bbox_for_entity(field_info: dict, page_num: int) -> None:
     • Falls back progressively: full → first-6-words → first-4-words → first word.
     • Rejects a match whose OCR text shares NO significant tokens with the value.
     """
+   
     try:
         import fitz
     except ImportError:
         return
- 
-    pdf_path = None
-    import streamlit as st  # type: ignore
-    tmpdir = st.session_state.get("tmpdir", "")
-    if tmpdir:
-        for ext in (".pdf", ".PDF"):
-            c = os.path.join(tmpdir, f"input{ext}")
-            if os.path.exists(c):
-                pdf_path = c
-                break
-    if not pdf_path:
-        return
- 
+
     val_text = (field_info.get("value") or "").strip()
     if not val_text:
         return
- 
+
     val_toks = _sig_tokens(val_text)
     words    = val_text.split()
+
+    # Use shared doc if provided, otherwise open our own
+    _own_doc = False
+    if shared_doc is not None:
+        doc = shared_doc
+    else:
+        pdf_path = None
+        import streamlit as st  # type: ignore
+        tmpdir = st.session_state.get("tmpdir", "")
+        if tmpdir:
+            for ext in (".pdf", ".PDF"):
+                c = os.path.join(tmpdir, f"input{ext}")
+                if os.path.exists(c):
+                    pdf_path = c
+                    break
+        if not pdf_path:
+            return
+        try:
+            doc = fitz.open(pdf_path)
+            _own_doc = True
+        except Exception:
+            return
+    
  
     # Build candidate search strings from longest to shortest
     candidates: list[str] = []
@@ -589,11 +605,11 @@ def _try_pymupdf_bbox_for_entity(field_info: dict, page_num: int) -> None:
         candidates.append(c.upper())
  
     try:
-        doc = fitz.open(pdf_path)
         if page_num < 1 or page_num > len(doc):
-            doc.close()
+            if _own_doc:
+                doc.close()
             return
- 
+
         page      = doc[page_num - 1]
         pw        = page.rect.width
         ph        = page.rect.height
@@ -644,9 +660,14 @@ def _try_pymupdf_bbox_for_entity(field_info: dict, page_num: int) -> None:
             field_info["page_height"]   = page_h_in
             field_info["_pymupdf_bbox"] = True
  
-        doc.close()
+        if _own_doc:
+            doc.close()
     except Exception:
-        pass
+        if _own_doc:
+            try:
+                doc.close()
+            except Exception:
+                pass
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -677,6 +698,12 @@ def _bbox_covers_too_much(polygon, page_w, page_h, max_fraction=0.25) -> bool:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
+    # Cache the enriched entity list — recomputing on every rerender is expensive
+    # because it opens the PDF via PyMuPDF for Guard B + bbox search per entity.
+    _cache_key = f"_intel_entities_{selected_sheet}"
+    if _cache_key in st.session_state:
+        return st.session_state[_cache_key]
+
     intel    = st.session_state.get("_pdf_intelligence", {})
     analysis = intel.get("analysis", {})
     entities = analysis.get("entities", {})
@@ -692,6 +719,23 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
 
     az_lookup = _build_azure_lookup()
     eds       = _edits()
+    # Open PDF once for the whole enrichment pass — shared across all entities
+    _tmpdir  = st.session_state.get("tmpdir", "")
+    _pdf_path_shared: str | None = None
+    _fitz_doc_shared = None
+    if _tmpdir:
+        for _ext in (".pdf", ".PDF"):
+            _c = os.path.join(_tmpdir, f"input{_ext}")
+            if os.path.exists(_c):
+                _pdf_path_shared = _c
+                break
+    try:
+        import fitz as _fitz
+        if _pdf_path_shared:
+            _fitz_doc_shared = _fitz.open(_pdf_path_shared)
+    except Exception:
+        _fitz_doc_shared = None
+
     out: list[tuple[str, dict]] = []
 
     for entity_name, entity_data in entities.items():
@@ -784,10 +828,47 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
                     break
 
         if field_info["bounding_polygon"] is None and field_info.get("value"):
-            _try_pymupdf_bbox_for_entity(field_info, field_info["source_page"])
+            _try_pymupdf_bbox_for_entity(
+                field_info, field_info["source_page"], shared_doc=_fitz_doc_shared
+            )
 
         out.append((entity_name, field_info))
 
+    # Deduplicate: remove fields whose (normalized_name, normalized_value) pair
+    # has already been seen — handles cases where core entities and subtype
+    # entities extract the same field under different names (e.g. "Policyholder Name"
+    # and "Legal Business Name" both resolving to the same company name value)
+    seen_values: dict[str, str] = {}   # normalized_value → first field_name seen
+    seen_names:  set[str]       = set()
+    deduped: list[tuple[str, dict]] = []
+    for fname, finfo in out:
+        val      = (finfo.get("value") or "").strip()
+        nname    = _nk(fname)
+        nval     = val.lower().strip()
+
+        # Always keep if value is empty or unique name
+        if not nval or nname not in seen_names:
+            # Check if this value was already captured under a different field name
+            if nval and nval in seen_values:
+                # Only skip if the names are semantically similar (aliases of each other)
+                existing_name = seen_values[nval]
+                if _match_score(_nk(existing_name), nname) >= 0.40:
+                    seen_names.add(nname)
+                    continue
+            if nval:
+                seen_values[nval] = fname
+            seen_names.add(nname)
+            deduped.append((fname, finfo))
+        
+    out = deduped
+
+    if _fitz_doc_shared:
+        try:
+            _fitz_doc_shared.close()
+        except Exception:
+            pass
+
+    st.session_state[_cache_key] = out
     return out
 
 
@@ -1112,6 +1193,10 @@ def _sync_edit(field_name: str, new_value: str, selected_sheet: str) -> None:
         })
 
     st.session_state.pop("_adi_lookup", None)
+    # Invalidate entity cache so bbox enrichment reruns with fresh edits
+    for k in list(st.session_state.keys()):
+        if k.startswith("_intel_entities_"):
+            st.session_state.pop(k, None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1365,8 +1450,23 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
 
             # Determine if the stored rect is wrong
             if is_short:
-                if val_digits and len(val_digits) >= 7:
+                if val_digits and len(val_digits) >= 7 and len(val_str) <= 20:
                     rect_is_wrong = val_digits not in region_digits
+                elif len(val_str) >= 8:
+                    # Strict check for dates: require full value OR date-only part
+                    # to be present — "January 20" must not match "January 22"
+                    _date_only_check = ""
+                    if " - " in val_str:
+                        _date_only_check = val_str.split(" - ")[0].strip().lower()
+                    import re as _re3
+                    _date_only_check = _date_only_check or _re3.sub(
+                        r"\s+\d{1,2}:\d{2}\s*(AM|PM)?$", "", val_str,
+                        flags=_re3.IGNORECASE
+                    ).strip().lower()
+                    rect_is_wrong = (
+                        val_lower not in region_lower
+                        and (not _date_only_check or _date_only_check not in region_lower)
+                    )
                 else:
                     rect_is_wrong = val_lower not in region_lower
             else:
@@ -1385,7 +1485,43 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
 
                 words = val_str.split()
                 if is_short:
-                    search_candidates = [val_str, val_str.upper(), val_str.lower()]
+                    import re as _re2
+                    date_only = val_str
+
+                    # Strip time portion for date values
+                    if " - " in val_str:
+                        date_only = val_str.split(" - ")[0].strip()
+                    date_only = _re2.sub(
+                        r"\s+\d{1,2}:\d{2}\s*(AM|PM)?$", "", date_only,
+                        flags=_re2.IGNORECASE
+                    ).strip()
+
+                    search_candidates = []
+
+                    # For values with a phone number suffix, try the name-only part first
+                    # e.g. "ServiceMaster Restore - Dallas North (214) 555-0740"
+                    # → "ServiceMaster Restore - Dallas North"
+                    phone_stripped = _re2.sub(
+                        r"\s*[\(\-\.]?\d{3}[\)\-\.\s]\s*\d{3}[\-\.\s]\d{4}.*$",
+                        "", val_str
+                    ).strip().rstrip(" -–—")
+                    if phone_stripped and phone_stripped != val_str and len(phone_stripped) > 6:
+                        search_candidates.append(phone_stripped)
+
+                    # Date-only before full value
+                    if date_only and date_only != val_str:
+                        search_candidates.append(date_only)
+
+                    search_candidates += [val_str, val_str.upper(), val_str.lower()]
+
+                    # Deduplicate preserving order
+                    seen_c: set[str] = set()
+                    search_candidates = [
+                        c for c in search_candidates
+                        if not (c in seen_c or seen_c.add(c))  # type: ignore[func-returns-value]
+                    ]
+             
+                 
                 else:
                     search_candidates = []
                     for n in (len(words), 8, 6, 4):
@@ -1416,8 +1552,19 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                             nearby_digits = _digits_only(nearby)
 
                             if is_short:
-                                if val_digits and len(val_digits) >= 7:
+                                if val_digits and len(val_digits) >= 7 and len(val_str) <= 20:
                                     score = 2.0 if val_digits in nearby_digits else 0.0
+                                elif len(val_str) >= 8:
+                                    # For date/time strings require the exact full
+                                    # value OR the date-only portion to be present —
+                                    # prevents "January 22" matching "January 20" etc.
+                                    nearby_l = nearby.lower()
+                                    if val_lower in nearby_l:
+                                        score = 2.0
+                                    elif date_only and date_only.lower() in nearby_l:
+                                        score = 2.0
+                                    else:
+                                        score = 0.0
                                 else:
                                     score = 1.0 if val_lower in nearby.lower() else 0.0
                             else:
@@ -1434,7 +1581,7 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     if best_r and best_score >= 1.0:
                         break
 
-                if best_r and best_score > 0:
+                if best_r and best_score >= 2.0:
                     if best_page_i != source_page - 1:
                         page         = doc[best_page_i]
                         pw_pts       = page.rect.width
@@ -1446,12 +1593,16 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     new_x1 = best_r.x1
                     new_y1 = best_r.y1
 
-                    # Expand to full width + downward for long paragraph values
+                    # Expand in all directions for long paragraph values
                     if not is_short and len(words) > 6:
                         line_h      = best_r.height or 12
-                        expand_down = min(line_h * 6, ph_pts - new_y1)
+                        # Expand upward to catch lines before the search hit
+                        expand_up   = min(line_h * 3, new_y0)
+                        new_y0     -= expand_up
+                        # Expand downward to cover rest of paragraph
+                        expand_down = min(line_h * 8, ph_pts - new_y1)
                         new_y1     += expand_down
-                        # Stretch to full page margins so the entire paragraph is boxed
+                        # Stretch to full page margins so entire paragraph is boxed
                         new_x0      = max(0, new_x0 - 40)
                         new_x1      = min(pw_pts, pw_pts - 20)
 
@@ -3201,6 +3352,9 @@ def render_pdf_analysis_panel(
             "_pdf_edit_mode_fields",
         ):
             st.session_state.pop(_stale_key, None)
+        for _k in list(st.session_state.keys()):
+            if _k.startswith("_intel_entities_"):
+                st.session_state.pop(_k, None)  # ← should be _k
         st.session_state["_pdf_analysis_intel_fp"]     = _intel_fp
         st.session_state["_pdf_analysis_current_file"] = uploaded_name
 

@@ -436,7 +436,7 @@ sheet_dup_info = st.session_state.get("sheet_dup_info", {})
 if "sheet_names" not in st.session_state:
     st.session_state.sheet_names = get_sheet_names(excel_path)
 
-    
+
 render_file_card(
     uploaded, excel_path, file_hash, is_dup,
     sheet_dup_info, st.session_state.sheet_names,
@@ -885,3 +885,14 @@ else:
             title_fields=title_fields,
             _llm_map_result=_llm_map_result,
         )
+
+hide_st_style = """
+<style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            /* This target's the 'Manage app' area specifically in some versions */
+            div[data-testid="stStatusWidget"] {visibility: hidden;} 
+</style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)        

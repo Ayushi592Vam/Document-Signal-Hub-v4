@@ -170,6 +170,11 @@ entities:
     aliases: [Cause of Loss, Loss Cause, Peril, Cause of Damage, Type of Loss]
     required: true
     type: string
+    # NOTE: This field may have MULTIPLE checked boxes on the form.
+    # Extract ALL checked/selected options as a combined value separated by " / ".
+    # For example if both "Water / Flood" AND "Burst Pipe / Plumbing" are checked,
+    # extract "Water / Flood / Burst Pipe / Plumbing".
+    # Do NOT pick just one — capture every checked peril exactly as labelled.
 
   - name: Description of Loss
     aliases: [Detailed Description, Description of How the Incident Occurred, Detailed Narrative of Loss, Description of Loss, Loss Description, Loss Narrative]

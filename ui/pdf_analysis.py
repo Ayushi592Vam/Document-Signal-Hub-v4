@@ -29,6 +29,14 @@ Changes from v9:
     proportional to the bbox size (min 80 pt, max 120 pt) so small fields
     are never clipped out. The confidence pill is repositioned to stay
     inside the crop even for top-of-page fields.
+
+  FIX 5 — Bounding box covers full extracted value (date + time fix)
+    When a value like "January 20, 2025 - 6:00 AM" was searched, the old
+    code stripped the time suffix and found only "January 20, 2025", so
+    the highlight rect was too narrow.  Two-part fix:
+      • Full value is now searched FIRST; date-only is a fallback.
+      • After any match, all tokens of val_str are unioned on the same
+        line so the rect always spans the complete value text.
   ─────────────────────────────────────────────────────────────────────────
 """
 
@@ -408,10 +416,10 @@ def _find_azure_match(
 ) -> dict | None:
     """
     Same as original but with two extra guards:
- 
+
     Guard A (existing, tightened): reject when LLM value and Azure DI value
       share NO significant tokens — unchanged from v9.
- 
+
     Guard B (new): after selecting the best candidate, verify that the
       candidate's bounding_polygon region text (obtained via PyMuPDF) actually
       contains at least one token from the LLM value.  If not, strip the
@@ -427,7 +435,7 @@ def _find_azure_match(
         s = re.sub(r'\([^)]*\)', '', s)
         s = s.rstrip(':').strip()
         return re.sub(r"[\s\-_:./]+", "_", s.lower()).strip("_")
- 
+
     def _match_score(a: str, b: str) -> float:
         if a == b:
             return 1.0
@@ -455,11 +463,11 @@ def _find_azure_match(
             if len(shorter_sig) >= 2 or coverage >= 0.50:
                 return 0.60
         return jaccard if inter >= 1 and jaccard >= 0.40 else 0.0
- 
+
     en = _nk(entity_name)
     best_entries: list[dict] = []
     best_score: float = 0.0
- 
+
     for az_norm, entries in lookup.items():
         score = _match_score(en, az_norm)
         if score > best_score:
@@ -467,12 +475,12 @@ def _find_azure_match(
             best_entries = entries
         elif score == best_score and score > 0:
             best_entries = best_entries + entries
- 
+
     en_word_count = len([w for w in en.split("_") if w])
     threshold = 0.50 if en_word_count <= 2 else 0.60
     if best_score < threshold or not best_entries:
         return None
- 
+
     if len(best_entries) == 1:
         candidate = best_entries[0]
     elif hint_page is not None:
@@ -480,14 +488,14 @@ def _find_azure_match(
         candidate  = page_match or max(best_entries, key=lambda e: float(e.get("confidence", 0.0)))
     else:
         candidate = max(best_entries, key=lambda e: float(e.get("confidence", 0.0)))
- 
+
     # Guard A — value token overlap (same as original)
     if llm_value and candidate:
         llm_toks = _sig_tokens(llm_value)
         az_toks  = _sig_tokens(str(candidate.get("value", "")))
         if llm_toks and az_toks and not llm_toks & az_toks:
             return None
- 
+
     # Guard B (NEW) — verify the polygon region text matches the value
     # We only do this when a polygon is present and we have a value to check.
     if llm_value and candidate and candidate.get("bounding_polygon"):
@@ -495,7 +503,7 @@ def _find_azure_match(
         page_w_in  = candidate.get("page_width",  8.5)
         page_h_in  = candidate.get("page_height", 11.0)
         source_page = candidate.get("source_page", 1)
- 
+
         import streamlit as st  # type: ignore
         tmpdir   = st.session_state.get("tmpdir", "")
         pdf_path = None
@@ -505,7 +513,7 @@ def _find_azure_match(
                 if os.path.exists(c):
                     pdf_path = c
                     break
- 
+
         if pdf_path:
             try:
                 import fitz
@@ -516,7 +524,7 @@ def _find_azure_match(
                     ph_pts = page.rect.height
                     sx = pw_pts / page_w_in if page_w_in > 0 else 72.0
                     sy = ph_pts / page_h_in if page_h_in > 0 else 72.0
- 
+
                     xs = [p[0] * sx for p in polygon]
                     ys = [p[1] * sy for p in polygon]
                     clip = fitz.Rect(min(xs), min(ys), max(xs), max(ys))
@@ -528,7 +536,7 @@ def _find_azure_match(
                     region_text = page.get_text("text", clip=clip).strip()
                     region_toks = _sig_tokens(region_text)
                     llm_toks    = _sig_tokens(llm_value)
- 
+
                     # If the polygon region shares NO tokens with the value →
                     # strip polygon so caller falls through to PyMuPDF search
                     if llm_toks and region_toks and not llm_toks & region_toks:
@@ -537,7 +545,7 @@ def _find_azure_match(
                 doc.close()
             except Exception:
                 pass
- 
+
     return candidate
 
 
@@ -548,7 +556,7 @@ def _try_pymupdf_bbox_for_entity(
 ) -> None:
     """
     Search the PDF page for the extracted value text and set bounding_polygon.
- 
+
     Improvements over the original:
     • Tries the FULL value string first (not just the first 4 words).
     • When multiple candidate rects are found, picks the one whose surrounding
@@ -557,7 +565,7 @@ def _try_pymupdf_bbox_for_entity(
     • Falls back progressively: full → first-6-words → first-4-words → first word.
     • Rejects a match whose OCR text shares NO significant tokens with the value.
     """
-   
+
     try:
         import fitz
     except ImportError:
@@ -591,8 +599,8 @@ def _try_pymupdf_bbox_for_entity(
             _own_doc = True
         except Exception:
             return
-    
- 
+
+
     # Build candidate search strings from longest to shortest
     candidates: list[str] = []
     for n in (len(words), 6, 4, 2):
@@ -603,7 +611,7 @@ def _try_pymupdf_bbox_for_entity(
     # Also try uppercased variants
     for c in list(candidates):
         candidates.append(c.upper())
- 
+
     try:
         if page_num < 1 or page_num > len(doc):
             if _own_doc:
@@ -615,37 +623,37 @@ def _try_pymupdf_bbox_for_entity(
         ph        = page.rect.height
         page_w_in = field_info.get("page_width",  8.5)
         page_h_in = field_info.get("page_height", 11.0)
- 
+
         best_rect  = None
         best_score = -1
- 
+
         for cand in candidates:
             rects = page.search_for(cand)
             if not rects:
                 continue
- 
+
             for r in rects:
                 # Extract nearby words to validate this rect is the right region
                 pad = fitz.Rect(r.x0 - 20, r.y0 - 5, r.x1 + 20, r.y1 + 5)
                 nearby_words = page.get_text("words", clip=pad)
                 nearby_text  = " ".join(w[4] for w in nearby_words)
                 nearby_toks  = _sig_tokens(nearby_text)
- 
+
                 if val_toks:
                     overlap = len(val_toks & nearby_toks) / len(val_toks)
                 else:
                     overlap = 1.0  # no tokens to check → accept
- 
+
                 # Prefer higher overlap and longer candidate string
                 score = overlap * len(cand)
                 if score > best_score:
                     best_score = score
                     best_rect  = r
- 
+
             # If we found a good match (>50% token overlap) stop searching shorter
             if best_rect and best_score >= len(cand) * 0.5:
                 break
- 
+
         if best_rect and (best_score > 0 or not val_toks):
             inv_sx = page_w_in / pw if pw else 1.0
             inv_sy = page_h_in / ph if ph else 1.0
@@ -659,7 +667,7 @@ def _try_pymupdf_bbox_for_entity(
             field_info["page_width"]    = page_w_in
             field_info["page_height"]   = page_h_in
             field_info["_pymupdf_bbox"] = True
- 
+
         if _own_doc:
             doc.close()
     except Exception:
@@ -683,8 +691,6 @@ def _lookup_confidence(field_name: str, field_info: dict) -> float:
     return 0.0
 
 
-#patch------------------------------
-
 def _bbox_covers_too_much(polygon, page_w, page_h, max_fraction=0.25) -> bool:
     """True if bbox covers more than max_fraction of the page — likely a bad match."""
     if not polygon or not page_w or not page_h:
@@ -693,6 +699,8 @@ def _bbox_covers_too_much(polygon, page_w, page_h, max_fraction=0.25) -> bool:
     ys = [p[1] for p in polygon]
     area = (max(xs) - min(xs)) * (max(ys) - min(ys))
     return area / (page_w * page_h) > max_fraction
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # LLM ENTITIES ENRICHED WITH AZURE DI
 # ─────────────────────────────────────────────────────────────────────────────
@@ -769,7 +777,7 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
         if az_match:
             adi_conf = float(az_match.get("confidence", 0.0))
             field_info["bounding_polygon"] = az_match.get("bounding_polygon")
-            
+
             field_info["source_page"]  = az_match.get("source_page", 1)
             field_info["page_width"]   = az_match.get("page_width",  8.5)
             field_info["page_height"]  = az_match.get("page_height", 11.0)
@@ -790,8 +798,8 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
                 field_info["bounding_polygon"],
                 field_info["page_width"],
                 field_info["page_height"],
-):
-                field_info["bounding_polygon"] = None 
+            ):
+                field_info["bounding_polygon"] = None
 
         if adi_key_hint and field_info["bounding_polygon"] is None:
             adi_norm = _nk(adi_key_hint)
@@ -859,7 +867,7 @@ def _get_intelligence_entities(selected_sheet: str) -> list[tuple[str, dict]]:
                 seen_values[nval] = fname
             seen_names.add(nname)
             deduped.append((fname, finfo))
-        
+
     out = deduped
 
     if _fitz_doc_shared:
@@ -880,6 +888,7 @@ def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
     """
     Returns (icon, label, detail) describing how this field was actually extracted.
     """
+
     is_user_added  = field_info.get("_user_added", False)
     from_call_b    = field_info.get("_from_call_b", False)
     adi_matched    = field_info.get("_adi_matched", False)
@@ -898,24 +907,23 @@ def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
     if from_intel and not from_call_b:
         if adi_matched and adi_conf > 0:
             return (
-                "🤖+📄",
-                "LLM  · Confirmed by Azure DI",
-                f"Value extracted by LLM. "
+                "📄",
+                "Azure DI — confidence + bbox",
                 f"Bounding box and confidence ({conf_pct}%) sourced from Azure Document Intelligence "
                 f"field match: '{adi_key}', page {source_page}.",
             )
         elif adi_matched:
             return (
-                "🤖+📄",
-                "LLM · Azure DI bbox located",
-                f"Value extracted by LLM.  Bounding polygon located via Azure DI "
+                "📄",
+                "Azure DI bbox located",
+                f"Bounding polygon located via Azure DI "
                 f"field name match ('{adi_key}', page {source_page}), no ADI confidence score.",
             )
         elif pymupdf:
             return (
-                "🤖+🔍",
-                "LLM · PyMuPDF text search bbox",
-                f"Value extracted by LLM. No Azure DI match found — "
+                "🔍",
+                "PyMuPDF text search bbox",
+                f"No Azure DI match found — "
                 f"bounding box located by searching PDF text layer for value '{llm_value[:40]}' "
                 f"on page {source_page} using PyMuPDF.",
             )
@@ -924,13 +932,12 @@ def _extraction_source_label(field_info: dict) -> tuple[str, str, str]:
                 "🤖",
                 "LLM — no bounding box",
                 "Value extracted by LLM during the entities+signals pass. "
-                "No matching Azure DI field or PyMuPDF text region was found. "
-                ,
+                "No matching Azure DI field or PyMuPDF text region was found.",
             )
 
     if from_intel and from_call_b:
         return (
-            "🤖²",
+            "🧩",
             "LLM — type-specific field",
             "Entities from Call A were empty or unavailable. This value was extracted "
             "during the summary+type_specific pass as a fallback. "
@@ -961,7 +968,7 @@ def _field_justification(field_name: str, field_info: dict) -> tuple[str, str]:
     """
     Returns (why_extracted, why_no_bbox) — both plain English.
 
-    why_extracted: why this field is shown at all (what schema / doc type 
+    why_extracted: why this field is shown at all (what schema / doc type
                    logic makes it relevant to a claims handler)
     why_no_bbox:   the technical reason no bounding polygon is available
     """
@@ -1200,33 +1207,33 @@ def _sync_edit(field_name: str, new_value: str, selected_sheet: str) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FIX 4 — BOUNDING BOX POPUP  (corrected coordinate scaling + generous crop)
+# FIX 4 + FIX 5 — BOUNDING BOX POPUP
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> None:
     """
     Render the zoomed PDF crop with highlighted bounding box.
 
-    FIXES applied in this version:
-    ─────────────────────────────────────────────────────────────────────────
     FIX A — Label-vs-value mismatch:
       If the polygon region contains the field label but not the value,
       fall back to page.search_for() for the actual value text.
 
     FIX B — Wrong value for short/numeric fields (phone, code, date):
       Use exact digit-string comparison, not token overlap.
-      If digits don't match, search ALL pages (not just source_page) so that
-      a value extracted from page 2 isn't incorrectly shown on page 1.
+      If digits don't match, search ALL pages (not just source_page).
 
     FIX C — Expand bbox for long multi-line values:
       After a fallback search hit, expand the rect downward by up to 6 line
       heights to cover a reasonable portion of a paragraph value.
 
     FIX D — Boolean / very short values ("Yes", "No", True/False):
-      When the value is ≤5 chars (Yes/No/True/False), the highlight rect is
-      often just one word wide. Expand it horizontally to include the checkbox
-      label context (±120 pts) so the zoomed view is readable.
-    ─────────────────────────────────────────────────────────────────────────
+      Expand horizontally to include the checkbox label context.
+
+    FIX E (new) — Full value coverage for date+time and similar compound values:
+      Full value string is searched FIRST; date-only stripped variant is only
+      a fallback.  After any match, every token of val_str is searched on the
+      same line and the rects are unioned so the highlight always spans the
+      complete extracted text (e.g. "January 20, 2025 — 6:00 AM").
     """
     import streamlit as st
     import re as _re
@@ -1255,7 +1262,7 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         f"<div style='display:flex;justify-content:space-between;align-items:flex-start;'>"
         f"<div>"
         f"<div style='font-size:9px;color:{_LBL};font-family:monospace;"
-        f"text-transform:uppercase;letter-spacing:1px;'>LLM-Extracted Field</div>"
+        f"text-transform:uppercase;letter-spacing:1px;'>Extracted Field</div>"
         f"<div style='font-size:16px;font-weight:700;color:#7c3aed;"
         f"font-family:monospace;margin-top:2px;'>{field_name}</div>"
         f"</div>"
@@ -1335,29 +1342,14 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         is_boolean   = val_lower in {"yes", "no", "true", "false"}
         is_short     = len(val_str) <= 40   # phone/code/date/boolean
         corrected    = False
+        rect_is_wrong = False
         display_page = source_page          # may change if value found on different page
 
-        # ── BOOLEAN SPECIAL CASE ─────────────────────────────────────────────────────
-        # Problem: "Yes"/"No" appear many times on a form. We must identify which
-        # specific checkbox belongs to THIS field.
-        #
-        # Core strategy — in priority order:
-        #   1. Use the Azure DI polygon centre as a spatial anchor (it knows WHICH
-        #      field region this is, even if the polygon itself is slightly off).
-        #      Find the "Yes"/"No" rect whose centre is closest to the ADI polygon centre.
-        #      Apply a strict distance cap so we never jump to a different row.
-        #   2. If no "Yes"/"No" rects exist near the ADI anchor, search for the field
-        #      label text and use that Y as fallback anchor.
-        #   3. Last resort: pick the globally closest "Yes"/"No" to the polygon centre.
-        #
-        # The key insight: we do NOT trust the polygon rect for display (it may cover
-        # the wrong row), but we DO trust its CENTRE POINT as a location hint.
+        # ── BOOLEAN SPECIAL CASE ──────────────────────────────────────────────
         if is_boolean and val_str:
-            # ADI polygon centre — our primary spatial anchor
             adi_centre_x = (x0 + x1) / 2.0
             adi_centre_y = (y0 + y1) / 2.0
 
-            # Search for all occurrences of the boolean value on the page
             val_rects = (
                 page.search_for(val_str)
                 or page.search_for(val_str.upper())
@@ -1369,23 +1361,18 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
             if val_rects:
                 line_h = val_rects[0].height if val_rects[0].height > 0 else 12.0
 
-                # Strategy 1: find "Yes"/"No" rect closest to ADI polygon centre,
-                # but cap at 3 line-heights vertically (same general area of the form)
                 nearby = [
                     r for r in val_rects
                     if abs((r.y0 + r.y1) / 2.0 - adi_centre_y) <= line_h * 3
                 ]
 
                 if nearby:
-                    # Among nearby, pick the one with smallest Euclidean distance
-                    # to the ADI polygon centre
                     def _dist(r):
                         cx = (r.x0 + r.x1) / 2.0
                         cy = (r.y0 + r.y1) / 2.0
                         return ((cx - adi_centre_x) ** 2 + (cy - adi_centre_y) ** 2) ** 0.5
                     best_r = min(nearby, key=_dist)
                 else:
-                    # Strategy 2: try label text search as secondary anchor
                     label_variants = [
                         field_name,
                         field_name.upper(),
@@ -1399,7 +1386,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                             label_anchor_y = (lrects[0].y0 + lrects[0].y1) / 2.0
                             break
 
-                    # Try individual long words from the label
                     if label_anchor_y is None:
                         label_words = [w for w in field_name.split() if len(w) > 4]
                         word_ys = []
@@ -1419,11 +1405,9 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                             best_r = min(same_row,
                                          key=lambda r: abs((r.y0 + r.y1) / 2.0 - label_anchor_y))
                         else:
-                            # Strategy 3: global closest to ADI centre — last resort
                             best_r = min(val_rects,
                                          key=lambda r: abs((r.y0 + r.y1) / 2.0 - adi_centre_y))
                     else:
-                        # Strategy 3: no label found either — global closest to ADI centre
                         best_r = min(val_rects,
                                      key=lambda r: abs((r.y0 + r.y1) / 2.0 - adi_centre_y))
 
@@ -1454,7 +1438,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     rect_is_wrong = val_digits not in region_digits
                 elif len(val_str) >= 8:
                     # Strict check for dates: require full value OR date-only part
-                    # to be present — "January 20" must not match "January 22"
                     _date_only_check = ""
                     if " - " in val_str:
                         _date_only_check = val_str.split(" - ")[0].strip().lower()
@@ -1486,9 +1469,9 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                 words = val_str.split()
                 if is_short:
                     import re as _re2
-                    date_only = val_str
 
-                    # Strip time portion for date values
+                    # Strip time portion for date values — used as FALLBACK only
+                    date_only = val_str
                     if " - " in val_str:
                         date_only = val_str.split(" - ")[0].strip()
                     date_only = _re2.sub(
@@ -1496,11 +1479,9 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                         flags=_re2.IGNORECASE
                     ).strip()
 
-                    search_candidates = []
+                    search_candidates: list[str] = []
 
-                    # For values with a phone number suffix, try the name-only part first
-                    # e.g. "ServiceMaster Restore - Dallas North (214) 555-0740"
-                    # → "ServiceMaster Restore - Dallas North"
+                    # ── FIX 5: phone-stripped name first (name-only before full) ──
                     phone_stripped = _re2.sub(
                         r"\s*[\(\-\.]?\d{3}[\)\-\.\s]\s*\d{3}[\-\.\s]\d{4}.*$",
                         "", val_str
@@ -1508,11 +1489,14 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     if phone_stripped and phone_stripped != val_str and len(phone_stripped) > 6:
                         search_candidates.append(phone_stripped)
 
-                    # Date-only before full value
+                    # ── FIX 5: FULL value first — ensures "January 20, 2025 - 6:00 AM"
+                    #    is tried before the stripped "January 20, 2025" variant ──────
+                    search_candidates += [val_str, val_str.upper(), val_str.lower()]
+
+                    # date-only as FALLBACK when full string isn't found verbatim
                     if date_only and date_only != val_str:
                         search_candidates.append(date_only)
-
-                    search_candidates += [val_str, val_str.upper(), val_str.lower()]
+                        search_candidates.append(date_only.upper())
 
                     # Deduplicate preserving order
                     seen_c: set[str] = set()
@@ -1520,8 +1504,7 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                         c for c in search_candidates
                         if not (c in seen_c or seen_c.add(c))  # type: ignore[func-returns-value]
                     ]
-             
-                 
+
                 else:
                     search_candidates = []
                     for n in (len(words), 8, 6, 4):
@@ -1555,9 +1538,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                                 if val_digits and len(val_digits) >= 7 and len(val_str) <= 20:
                                     score = 2.0 if val_digits in nearby_digits else 0.0
                                 elif len(val_str) >= 8:
-                                    # For date/time strings require the exact full
-                                    # value OR the date-only portion to be present —
-                                    # prevents "January 22" matching "January 20" etc.
                                     nearby_l = nearby.lower()
                                     if val_lower in nearby_l:
                                         score = 2.0
@@ -1593,21 +1573,52 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
                     new_x1 = best_r.x1
                     new_y1 = best_r.y1
 
-                    # Expand in all directions for long paragraph values
+                    # Expand for long paragraph values
                     if not is_short and len(words) > 6:
                         line_h      = best_r.height or 12
-                        # Expand upward to catch lines before the search hit
                         expand_up   = min(line_h * 3, new_y0)
                         new_y0     -= expand_up
-                        # Expand downward to cover rest of paragraph
                         expand_down = min(line_h * 8, ph_pts - new_y1)
                         new_y1     += expand_down
-                        # Stretch to full page margins so entire paragraph is boxed
                         new_x0      = max(0, new_x0 - 40)
                         new_x1      = min(pw_pts, pw_pts - 20)
 
+                    # ── FIX 5: union all same-line token rects to cover full value ──
+                    # When we matched via a partial candidate (e.g. date-only), the
+                    # remaining tokens ("— 6:00 AM") sit to the right on the same row.
+                    # We search every token of val_str and union rects on the same line.
+                    _expand_page = doc[best_page_i]
+                    _line_tol    = (best_r.height or 12) * 0.6
+                    _ux0 = new_x0
+                    _uy0 = new_y0
+                    _ux1 = new_x1
+                    _uy1 = new_y1
+                    _br_cy = (best_r.y0 + best_r.y1) / 2.0
+                    for _tok in val_str.replace(" - ", " ").replace("—", " ").split():
+                        if len(_tok) < 2:
+                            continue
+                        for _tr in _expand_page.search_for(_tok):
+                            _tr_cy = (_tr.y0 + _tr.y1) / 2.0
+                            if abs(_tr_cy - _br_cy) <= _line_tol:
+                                _ux0 = min(_ux0, _tr.x0)
+                                _uy0 = min(_uy0, _tr.y0)
+                                _ux1 = max(_ux1, _tr.x1)
+                                _uy1 = max(_uy1, _tr.y1)
+                    new_x0, new_y0, new_x1, new_y1 = _ux0, _uy0, _ux1, _uy1
+                    # ── end FIX 5 ─────────────────────────────────────────────
+
                     x0, y0, x1, y1 = new_x0, new_y0, new_x1, new_y1
                     corrected = True
+
+        # If rect was wrong and correction failed, don't show a misleading highlight
+        if rect_is_wrong and not corrected:
+            st.warning(
+                "⚠ The stored bounding box does not match the extracted value, "
+                "This typically means the value was inferred by the LLM from context "
+                "rather than read from a labelled field. The extracted value is still valid."
+            )
+            doc.close()
+            return
 
         bbox = fitz.Rect(x0, y0, x1, y1)
 
@@ -1646,7 +1657,6 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
         # ── Crop with generous padding ────────────────────────────────────────
         box_w = x1 - x0
         box_h = y1 - y0
-        # For wide/paragraph fields, use full page width so nothing is clipped
         is_wide_field = box_w > pw_pts * 0.5
         pad_x = 10.0 if is_wide_field else max(80.0, min(120.0, box_w * 1.5))
         pad_y = max(60.0, min(100.0, box_h * 2.0))
@@ -1692,7 +1702,8 @@ def _render_bbox_content(field_name: str, field_info: dict, pdf_path: str) -> No
     except Exception as exc:
         st.error(f"Could not render PDF page: {exc}")
 
-        
+
+# ─────────────────────────────────────────────────────────────────────────────
 # FIX 3 — NO-BBOX POPUP: explains WHY field exists + why no bbox
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1704,7 +1715,10 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
       2. How it was extracted (pipeline step)
       3. Why no bounding box is available (technical reason)
     """
-    icon, source_label, source_detail = _extraction_source_label(field_info)
+    _esl_result = _extraction_source_label(field_info)
+    icon          = _esl_result[0] if len(_esl_result) > 0 else "📋"
+    source_label  = _esl_result[1] if len(_esl_result) > 1 else "Unknown"
+    source_detail = _esl_result[2] if len(_esl_result) > 2 else ""
     why_extracted, why_no_bbox        = _field_justification(field_name, field_info)
     value                             = field_info.get("value", "")
     confidence                        = _lookup_confidence(field_name, field_info)
@@ -1781,7 +1795,10 @@ def _render_no_bbox_content(field_name: str, field_info: dict) -> None:
     )
 
     # Transformation journey summary
-    icon2, label2, detail2 = _extraction_source_label(field_info)
+    _esl_result2 = _extraction_source_label(field_info)
+    icon2   = _esl_result2[0] if len(_esl_result2) > 0 else "📋"
+    label2  = _esl_result2[1] if len(_esl_result2) > 1 else "Unknown"
+    detail2 = _esl_result2[2] if len(_esl_result2) > 2 else ""
     st.markdown(
         f"<div style='background:{_BG2};border:1px solid {_BORDER};"
         f"border-radius:8px;padding:14px 16px;'>"
@@ -1938,9 +1955,14 @@ def _render_entities_tab(
         )
         intel_fields = raw
 
+    import re as _re_nb
     _non_bool_fields = [
         (fn, fi) for fn, fi in intel_fields
         if (fi.get("value") or "").strip().lower() not in {"yes", "no", "true", "false"}
+        and not (
+            _re_nb.search(r"\d{3}[\)\-\.\s]\s*\d{3}[\-\.\s]\d{4}", fi.get("value") or "")
+            and len(fi.get("value") or "") > 20
+        )
     ]
     bbox_count = sum(1 for _, fi in _non_bool_fields if fi.get("bounding_polygon"))
     adi_count  = sum(
@@ -1991,6 +2013,14 @@ def _render_entities_tab(
 
         # Skip boolean Yes/No fields — not shown in the entities table
         if (extracted or "").strip().lower() in {"yes", "no", "true", "false"}:
+            continue
+
+        # Skip compound name+phone fields entirely
+        import re as _re_skip
+        if (
+            _re_skip.search(r"\d{3}[\)\-\.\s]\s*\d{3}[\-\.\s]\d{4}", extracted or "")
+            and len(extracted or "") > 20
+        ):
             continue
 
         modified   = eds.get(field_name, field_info.get("modified", extracted))
@@ -2066,9 +2096,6 @@ def _render_entities_tab(
                     st.rerun()
 
             with beye:
-                # FIX 3 — Eye button is always enabled.
-                # When bbox is available → show location in PDF.
-                # When bbox is missing  → show extraction explanation dialog.
                 if has_bbox:
                     tip = f"View field location in document · Confidence: {conf_pct}%"
                 else:
@@ -2553,19 +2580,18 @@ def _render_signals_tab(intelligence: dict) -> None:
                 f"<span style='font-size:9px;color:#92400e;background:#fffbeb;"
                 f"border:1px solid #fde68a;border-radius:10px;"
                 f"padding:1px 7px;font-family:monospace;margin-left:6px;'>"
-                "</span>"
+                f"keyword</span>"
                 if sig.get("_synthesized") else
                 f"<span style='font-size:9px;color:#1e40af;background:#eff6ff;"
                 f"border:1px solid #bfdbfe;border-radius:10px;"
                 f"padding:1px 7px;font-family:monospace;margin-left:6px;'>"
-                "</span>"
+                f"AI</span>"
             )
 
             # FIX 2 — supporting_text: full text shown, wraps correctly
             supporting_text = sig.get("supporting_text", "")
             supporting_html = ""
             if supporting_text:
-                # Escape HTML entities to prevent injection / rendering issues
                 safe_text = (
                     supporting_text
                     .replace("&", "&amp;")
@@ -2577,7 +2603,6 @@ def _render_signals_tab(intelligence: dict) -> None:
                     f"<div style='font-size:11px;color:{_LBL};font-family:monospace;"
                     f"background:{_BG2};border-left:2px solid {_BORDER2};padding:6px 10px;"
                     f"border-radius:0 4px 4px 0;font-style:italic;"
-                    # FIX 2: these three properties prevent cropping
                     f"white-space:pre-wrap;word-break:break-word;"
                     f"overflow-wrap:anywhere;margin-top:6px;'>"
                     f"📄 &ldquo;{safe_text}&rdquo;</div>"
@@ -2762,9 +2787,9 @@ def _render_journey_tab(
         f"padding:8px 0;border-bottom:1px solid {_BORDER};align-items:start;'>"
         f"<span style='font-size:10px;font-weight:700;color:#7c3aed;"
         f"font-family:monospace;text-transform:uppercase;letter-spacing:.8px;'>"
-        f"🤖 LLM CALL A</span>"
+        f"🤖 LLM</span>"
         f"<span style='font-size:11px;color:{_TXT2};font-family:monospace;'>"
-        f"→ LLM extracted entities + signals (pdf_intelligence Call A). "
+        f"→ extracted entities + signals. "
         f"Azure DI bounding boxes matched by field name similarity.</span></div>"
         f"<div style='display:grid;grid-template-columns:160px 1fr;gap:8px;"
         f"padding:8px 0;align-items:start;'>"
@@ -2798,24 +2823,17 @@ def _render_journey_tab(
         Step 2 of the transformation timeline.
 
         FIX 1: detects LLM-assigned "Other" for Cause of Loss.
-        When the document has an empty Cause of Loss column and the
-        schema-mapping LLM filled it in as "Other", the field_info will NOT
-        have _adi_matched=True (because there was nothing in Azure DI to
-        match against). Instead we detect this case by checking:
-          • field is cause-of-loss
-          • value is "Other" (or similar LLM fallback token)
-          • Azure DI raw value was empty / absent
-        and override the label to "LLM MAPPED — AI inference".
         """
-        icon, label, detail = _extraction_source_label(field_info)
+
+        _esl_result = _extraction_source_label(field_info)
+        icon   = _esl_result[0] if len(_esl_result) > 0 else "📋"
+        label  = _esl_result[1] if len(_esl_result) > 1 else "Unknown"
+        detail = _esl_result[2] if len(_esl_result) > 2 else ""
 
         # ── FIX 1 — detect LLM-assigned "Other" for Cause of Loss ────────────
         field_name_str = field_info.get("_field_name_hint", "")
         raw_value      = field_info.get("value", "")
-        adi_raw_value  = field_info.get("_adi_raw_value", "")  # set below if available
 
-        # A value of "Other" (or empty/unknown variants) on a COL field with no
-        # Azure DI source strongly implies LLM inference fallback.
         _llm_other_indicators = {
             "other", "n/a", "unknown", "not specified", "not stated",
             "unspecified", "see narrative", "various",
@@ -2844,7 +2862,7 @@ def _render_journey_tab(
         if field_info.get("_user_added"):
             step_color = "#7c3aed"
         elif _llm_assigned_other:
-            step_color = "#ca8a04"   # amber = LLM inference
+            step_color = "#ca8a04"
         elif field_info.get("_from_call_b"):
             step_color = "#ca8a04"
         elif field_info.get("_adi_matched") and field_info.get("_adi_confidence", 0) > 0:
@@ -2881,7 +2899,6 @@ def _render_journey_tab(
         )
 
     def _field_card(fname: str, finfo: dict) -> None:
-        # Inject field name hint so _source_step_html can check it
         finfo = dict(finfo)
         finfo["_field_name_hint"] = fname
 
@@ -3354,7 +3371,7 @@ def render_pdf_analysis_panel(
             st.session_state.pop(_stale_key, None)
         for _k in list(st.session_state.keys()):
             if _k.startswith("_intel_entities_"):
-                st.session_state.pop(_k, None)  # ← should be _k
+                st.session_state.pop(_k, None)
         st.session_state["_pdf_analysis_intel_fp"]     = _intel_fp
         st.session_state["_pdf_analysis_current_file"] = uploaded_name
 

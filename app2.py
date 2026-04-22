@@ -524,7 +524,7 @@ if selected_sheet not in st.session_state.sheet_cache:
                 _intel_file_key = "_pdf_intelligence_file"
                 _intel_key      = "_pdf_intelligence"
                 if st.session_state.get(_intel_file_key) != excel_path:
-                    with st.spinner("🧠 Running AI document analysis…"):
+                    with st.spinner("🧠 Running document analysis…"):
                         try:
                             from modules.pdf_intelligence import run_pdf_intelligence
                             from modules.pdf_azure_parser import parse_pdf_with_azure

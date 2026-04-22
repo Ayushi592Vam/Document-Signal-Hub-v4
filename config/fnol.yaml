@@ -342,10 +342,7 @@ subtypes:
       required: false
       type: boolean
 
-    - name: Emergency Contractor
-      aliases: [Emergency Contractor, Mitigation Contractor, Emergency Mitigation Contractor]
-      required: false
-      type: string
+    
 
     - name: ALE Requested
       aliases: [ALE Claim Requested, "ALE Requested?", Additional Living Expense Requested]

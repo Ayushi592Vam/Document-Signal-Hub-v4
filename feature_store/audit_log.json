@@ -27902,5 +27902,238 @@
     "total_rows": 1,
     "total_cols": 52,
     "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:00:45.324074",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:02:20.076113",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:07:20.628549",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:08:11.861930",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:10:25.006259",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:11:15.105317",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:16:20.608706",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:17:05.534573",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:18:07.492596",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:18:58.353350",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:21:32.920765",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "file_hash": "553bfdebca9b256bf17b9da16f1a8bb2c68ddeae6b51f6dec784db323e4283d8",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:22:22.531956",
+    "filename": "FNOL_Homeowners_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "7b3681fc860e4cda08a4bdfe9dcce2cec35e8c6bb1ca5f35671c7b1b2c8e17e7",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 52,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:26:14.742179",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "file_hash": "48f1e4dea6b9ec8fd1ed77df699358849d648f84ab35488b4d22aefdf7d14d00",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:27:18.467329",
+    "filename": "FNOL_Commercial_Property_Filled.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "44006b32dfab4098300b7fcbcfebe5ffe08dc42b5ed85eb59c4f2ed44f24b607",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 44,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:46:52.747913",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "file_hash": "ba9f17bbeeb8cd2abac2aa85476c2244425c9955e7baa69bd773ebc7d3c9edd4",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:47:33.368982",
+    "filename": "Legal_Civil_Complaint.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "48b1c7c0abbc566158f6c68039b81c67f579dc0b97848d0905b0427870f8ba0f",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 5,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:52:15.521889",
+    "filename": "Legal_Sample.pdf",
+    "file_hash": "890569c832e58254f08742bcae988b0e7160de87e87d54410c658d0744cce68d",
+    "sheets": [
+      "Page 1",
+      "Page 2"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:53:01.289467",
+    "filename": "Legal_Sample.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "db402c1a56bf83b5077725a3c9d4186cb00570e7d403038f8672660cc6b81071",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 10,
+    "col_renames": {}
+  },
+  {
+    "event": "FILE_INGESTED",
+    "timestamp": "2026-04-22T15:53:55.951048",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "file_hash": "9ec4cb74aad9339f143b3b2c13d74ddd7aa22eac44c29b41c320e7c28b1c9d7b",
+    "sheets": [
+      "Page 1",
+      "Page 2",
+      "Page 3",
+      "Page 4"
+    ]
+  },
+  {
+    "event": "SHEET_PARSED",
+    "timestamp": "2026-04-22T15:54:35.703617",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc",
+    "claim_rows": 1,
+    "sheet_type": "PDF",
+    "total_rows": 1,
+    "total_cols": 11,
+    "col_renames": {}
+  },
+  {
+    "event": "SHEET_LOADED_FROM_CACHE",
+    "timestamp": "2026-04-22T16:00:21.457520",
+    "filename": "Legal_Settlement_Agreement.pdf",
+    "sheet": "Page 1",
+    "sheet_hash": "a7c8fd4b8157bf4d6a5e7111f4487881a342ee16eea28c6fb80e4f013931d1dc"
   }
 ]
